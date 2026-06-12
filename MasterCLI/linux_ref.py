@@ -279,6 +279,48 @@ def run_command(cmd: str, cwd: str = None):
     except Exception as e:
         return "", str(e), 1
 
+# ── Draggable divider ────────────────────────────────────────────────────────
+
+class ResizeDivider(Widget):
+    """1-column draggable bar between the left and right panels."""
+
+    DEFAULT_CSS = """
+    ResizeDivider {
+        width: 1;
+        background: $primary-darken-2;
+    }
+    ResizeDivider:hover {
+        background: $accent;
+    }
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._dragging = False
+
+    def on_mouse_down(self, event) -> None:
+        self.capture_mouse()
+        self._dragging = True
+        event.stop()
+
+    def on_mouse_move(self, event) -> None:
+        if not self._dragging:
+            return
+        new_w = max(28, min(80, int(event.screen_x)))
+        left = self.app.query_one("#left", Vertical)
+        left.styles.width = new_w
+        self.app._left_width = new_w
+        event.stop()
+
+    def on_mouse_up(self, event) -> None:
+        if self._dragging:
+            self.release_mouse()
+            self._dragging = False
+            cfg = load_config()
+            cfg["left_width"] = self.app._left_width
+            save_config(cfg)
+        event.stop()
+
 # ── Command detail (right panel) ──────────────────────────────────────────────
 
 class CommandDetail(Vertical):
@@ -354,7 +396,6 @@ class DeamonCLIApp(App):
     /* ── Left panel ── */
     #left {
         width: 46;
-        border-right: solid $primary-darken-2;
         background: $panel;
     }
     TabbedContent {
@@ -523,9 +564,7 @@ class DeamonCLIApp(App):
     """
 
     BINDINGS = [
-        Binding("ctrl+q", "quit",        "Quit"),
-        Binding("f9",     "shrink_left", "← panel", show=True),
-        Binding("f10",    "grow_left",   "→ panel", show=True),
+        Binding("ctrl+q", "quit", "Quit"),
     ]
 
     def __init__(self):
@@ -572,6 +611,8 @@ class DeamonCLIApp(App):
                         yield DataTable(id="history-table", cursor_type="row")
                         yield Button("🗑  Clear history", id="hist-clear-btn", variant="error")
 
+            yield ResizeDivider()
+
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
@@ -589,22 +630,6 @@ class DeamonCLIApp(App):
         self.query_one("#terminal-prompt", Label).update(self._prompt)
         log = self.query_one("#terminal-log", RichLog)
         log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
-
-    # ── Column resize ─────────────────────────────────────────────────────────
-
-    def action_shrink_left(self) -> None:
-        panel = self.query_one("#left", Vertical)
-        new_w = max(28, self._left_width - 3)
-        panel.styles.width = new_w
-        self._left_width = new_w
-        save_config({"left_width": new_w})
-
-    def action_grow_left(self) -> None:
-        panel = self.query_one("#left", Vertical)
-        new_w = min(80, self._left_width + 3)
-        panel.styles.width = new_w
-        self._left_width = new_w
-        save_config({"left_width": new_w})
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -793,7 +818,14 @@ class DeamonCLIApp(App):
             return
 
     def on_unmount(self):
-        save_config({"left_width": self._left_width})
+        cfg = load_config()
+        cfg["left_width"] = self._left_width
+        try:
+            ts = os.get_terminal_size()
+            cfg["geometry"] = f"{ts.columns}x{ts.lines}"
+        except Exception:
+            pass
+        save_config(cfg)
         self._hcon.close()
 
 
