@@ -26,15 +26,22 @@ from gi.repository import Gtk
 
 def open_app(_=None):
     env = {**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":0")}
-    # Raise existing window if already open, otherwise launch fresh
+    # 1. Raise the existing window if it's already visible
     if shutil.which("wmctrl"):
-        result = subprocess.run(["wmctrl", "-a", "DeamonCLI"],
-                                capture_output=True, env=env)
-        if result.returncode == 0:
+        r = subprocess.run(["wmctrl", "-a", "DeamonCLI"], capture_output=True, env=env)
+        if r.returncode == 0:
             return
+    # 2. tmux session exists but window was closed — re-attach (app is still running)
+    if shutil.which("tmux"):
+        r = subprocess.run(["tmux", "has-session", "-t", "deamoncli"], capture_output=True)
+        if r.returncode == 0:
+            subprocess.Popen(["bash", LAUNCH], env=env)
+            return
+    # 3. Nothing running — launch fresh
     subprocess.Popen(["bash", LAUNCH], env=env)
 
 def quit_cb(_=None):
+    subprocess.call(["tmux", "kill-session", "-t", "deamoncli"])
     subprocess.call(["pkill", "-f", "linux_ref.py"])
     Gtk.main_quit()
 

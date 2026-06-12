@@ -454,7 +454,7 @@ class DeamonCLIApp(App):
         layout: vertical;
     }
     #detail-panel {
-        height: 45%;
+        height: auto;
         padding: 2 3;
         background: $background;
     }
@@ -462,6 +462,7 @@ class DeamonCLIApp(App):
     /* ── Embedded terminal ── */
     #terminal-log {
         height: 1fr;
+        min-height: 8;
         background: $surface;
         padding: 0 1;
         border: none;
@@ -598,7 +599,6 @@ class DeamonCLIApp(App):
         self._cwd               = str(Path.home())
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
-        self._top_height: int   = cfg.get("top_height", DEFAULT_TOP_HEIGHT)
 
     @property
     def _prompt(self) -> str:
@@ -638,7 +638,6 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
-                yield ResizeDivider(orientation="horizontal")
                 yield RichLog(id="terminal-log", highlight=True, wrap=True)
                 with Horizontal(id="terminal-input-row"):
                     yield Label("", id="terminal-prompt", markup=False)
@@ -649,7 +648,8 @@ class DeamonCLIApp(App):
 
     def on_mount(self) -> None:
         self.query_one("#left", Vertical).styles.width = self._left_width
-        self.query_one("#detail-panel", ScrollableContainer).styles.height = f"{self._top_height}%"
+        # Detail panel auto-sizes to content; cap at 55% so terminal always has room
+        self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "55%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
         log = self.query_one("#terminal-log", RichLog)
         log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
@@ -842,8 +842,7 @@ class DeamonCLIApp(App):
 
     def on_unmount(self):
         cfg = load_config()
-        cfg["left_width"]  = self._left_width
-        cfg["top_height"]  = self._top_height
+        cfg["left_width"] = self._left_width
         try:
             ts = os.get_terminal_size()
             cfg["geometry"] = f"{ts.columns}x{ts.lines}"
