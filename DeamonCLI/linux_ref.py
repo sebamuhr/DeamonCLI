@@ -131,6 +131,42 @@ def load_commands():
     with open(DB_PATH) as f:
         return json.load(f)["commands"]
 
+def search_folders(query: str) -> list:
+    """Find local directories whose name contains the query string."""
+    q = query.strip()
+    if len(q) < 2:
+        return []
+    home = Path.home()
+    try:
+        r = subprocess.run(
+            ["find", str(home), "-maxdepth", "4", "-type", "d",
+             "-not", "-path", "*/.*",
+             "-not", "-path", "*/node_modules/*",
+             "-not", "-path", "*/__pycache__/*",
+             "-iname", f"*{q}*"],
+            capture_output=True, text=True, timeout=2,
+        )
+        results = []
+        for line in r.stdout.splitlines()[:6]:
+            p = Path(line)
+            try:
+                rel = p.relative_to(home)
+                cmd_str = f"cd ~/{rel}"
+            except ValueError:
+                cmd_str = f"cd {line}"
+            results.append({
+                "title": p.name,
+                "command": cmd_str,
+                "category": "Folders",
+                "description": f"Navigate to  {line}",
+                "keywords": ["cd", "folder", "navigate", p.name.lower()],
+                "can_run": True,
+                "_folder": True,
+            })
+        return results
+    except Exception:
+        return []
+
 def search_commands(query: str, commands: list) -> list:
     # Strip stopwords, expand synonyms
     raw_words = query.lower().strip().split()
@@ -679,9 +715,22 @@ class DeamonCLIApp(App):
             results = search_commands(q, self._all_commands)
             self._results = results
             self._render_results(results, q)
+            self._search_folders_async(q)   # prepends folder hits when ready
         else:
             self._results = []
             self._show_recent_searches()
+
+    @work(thread=True)
+    def _search_folders_async(self, query: str) -> None:
+        folders = search_folders(query)
+        if folders:
+            self.app.call_from_thread(self._prepend_folder_results, query, folders)
+
+    def _prepend_folder_results(self, query: str, folders: list) -> None:
+        current_q = self.query_one("#search-input", Input).value.strip()
+        if current_q == query:
+            self._results = folders + self._results
+            self._render_results(self._results, query)
 
     def on_input_submitted(self, event: Input.Submitted):
         if event.input.id == "search-input":
@@ -746,7 +795,12 @@ class DeamonCLIApp(App):
         lv.clear()
         new_items = []
         for i, cmd in enumerate(results[:60]):
-            icon = "  " if cmd.get("can_run", True) else "⚠ "
+            if cmd.get("_folder"):
+                icon = "📁 "
+            elif cmd.get("can_run", True):
+                icon = "  "
+            else:
+                icon = "⚠ "
             new_items.append(
                 ListItem(Label(f"{icon}{cmd['title']}", markup=False), name=f"r{i}")
             )

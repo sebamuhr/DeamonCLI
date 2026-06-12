@@ -69,18 +69,42 @@ def _session_env():
 
 def open_app(_=None):
     env = _session_env()
-    log(f"--- open_app ---")
-    log(f"DBUS={env.get('DBUS_SESSION_BUS_ADDRESS', 'MISSING')}")
-    log(f"DISPLAY={env.get('DISPLAY', 'MISSING')}")
+    log("--- open_app ---")
 
-    # 1. Raise window if already on screen
+    # ── Check if a DeamonCLI window actually exists ───────────────────────────
+    window_exists = False
     if shutil.which("wmctrl"):
-        r = subprocess.run(["wmctrl", "-a", "DeamonCLI"], capture_output=True, env=env)
-        log(f"wmctrl rc={r.returncode} err={r.stderr.decode().strip()}")
-        if r.returncode == 0:
-            return
+        listed = subprocess.run(
+            ["wmctrl", "-l"], capture_output=True, text=True, env=env
+        ).stdout
+        log(f"wmctrl -l output:\n{listed.strip()}")
+        window_exists = "DeamonCLI" in listed
 
-    # 2. Make sure the tmux session (app) is running
+    if window_exists:
+        # Get current desktop number so we can move the window here
+        desk_out = subprocess.run(
+            ["wmctrl", "-d"], capture_output=True, text=True, env=env
+        ).stdout
+        current_desk = "0"
+        for line in desk_out.splitlines():
+            if "*" in line:
+                current_desk = line.split()[0]
+                break
+        log(f"current desktop={current_desk}")
+
+        # Move window to current desktop, unminimize, then focus
+        subprocess.run(["wmctrl", "-r", "DeamonCLI", "-t", current_desk],
+                       capture_output=True, env=env)
+        subprocess.run(["wmctrl", "-r", "DeamonCLI", "-b", "remove,hidden"],
+                       capture_output=True, env=env)
+        r = subprocess.run(["wmctrl", "-a", "DeamonCLI"],
+                           capture_output=True, env=env)
+        log(f"wmctrl raise rc={r.returncode}")
+        return
+
+    # ── No window — open a new one ────────────────────────────────────────────
+    log("no window found, opening new terminal")
+
     session_up = subprocess.run(
         ["tmux", "has-session", "-t", SESSION], capture_output=True
     ).returncode == 0
@@ -90,9 +114,7 @@ def open_app(_=None):
                           f"TERM=xterm-256color python3 {INSTALL_DIR}/linux_ref.py"])
         log("started new tmux session")
 
-    # 3. Open a terminal window (try three methods, log each)
-
-    # Method A — systemd-run: runs in the user's full session, always has DBUS
+    # Method A: systemd-run (correct way to launch GUI from a background process)
     if shutil.which("systemd-run"):
         r = subprocess.run(
             ["systemd-run", "--user", "--no-block",
@@ -104,16 +126,16 @@ def open_app(_=None):
         if r.returncode == 0:
             return
 
-    # Method B — gio launch: same code path as clicking in the apps menu
+    # Method B: gio launch (same path as clicking in apps menu)
     if shutil.which("gio") and os.path.exists(DESKTOP):
         r = subprocess.run(["gio", "launch", DESKTOP], capture_output=True, env=env)
         log(f"gio launch rc={r.returncode} err={r.stderr.decode().strip()}")
         if r.returncode == 0:
             return
 
-    # Method C — direct Popen with injected session env
-    r = subprocess.Popen(["bash", LAUNCH], env=env, start_new_session=True)
-    log(f"direct Popen pid={r.pid}")
+    # Method C: direct Popen
+    p = subprocess.Popen(["bash", LAUNCH], env=env, start_new_session=True)
+    log(f"direct Popen pid={p.pid}")
 
 # ── Quit ──────────────────────────────────────────────────────────────────────
 
