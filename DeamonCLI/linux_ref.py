@@ -12,7 +12,7 @@ try:
     from textual.widgets import (
         Header, Footer, ListView, ListItem, Label,
         Button, Input, Static, DataTable,
-        TabbedContent, TabPane, Rule
+        TabbedContent, TabPane, Rule, RichLog
     )
     from textual.binding import Binding
     from textual._work_decorator import work
@@ -486,6 +486,14 @@ class DeamonCLIApp(App):
     }
 
     /* ── Embedded terminal ── */
+    #terminal-log {
+        height: 1fr;
+        min-height: 4;
+        background: $background;
+        border-top: solid $primary-darken-3;
+        padding: 0 1;
+        scrollbar-size: 1 1;
+    }
     #terminal-input-row {
         height: 3;
         background: $surface;
@@ -645,6 +653,7 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
+                yield RichLog(id="terminal-log", highlight=False, markup=False, wrap=True)
                 with Horizontal(id="terminal-input-row"):
                     yield Label("", id="terminal-prompt", markup=False)
                     yield Input(id="terminal-input", placeholder="")
@@ -653,8 +662,8 @@ class DeamonCLIApp(App):
 
     def on_mount(self) -> None:
         self.query_one("#left", Vertical).styles.width = self._left_width
-        # Detail panel auto-sizes to content; cap at 55% so terminal always has room
-        self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "55%"
+        # Detail panel auto-sizes to content; cap at 45% so the log always has room
+        self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "45%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
 
     def _welcome_widget(self) -> Static:
@@ -710,8 +719,25 @@ class DeamonCLIApp(App):
 
     # ── Embedded terminal ─────────────────────────────────────────────────────
 
+    def _tlog(self, text: str, style: str = "") -> None:
+        """Write a line to the terminal log (call from UI thread only)."""
+        try:
+            log = self.query_one("#terminal-log", RichLog)
+            if style:
+                log.write(Text(text, style=style))
+            else:
+                log.write(text)
+        except Exception:
+            pass
+
     def _execute_terminal_cmd(self, cmd: str) -> None:
-        # cd is handled locally — a subprocess can't change our directory
+        prompt = self._prompt
+        # Show the command line in the log
+        self._tlog(Text.assemble(
+            (prompt, "bold green"),
+            (cmd, "bold"),
+        ))
+        # cd is handled locally — a subprocess can't change the parent process's cwd
         parts = cmd.split()
         if parts and parts[0] == "cd":
             target = os.path.expanduser(parts[1] if len(parts) > 1 else "~")
@@ -721,15 +747,24 @@ class DeamonCLIApp(App):
             if os.path.isdir(target):
                 self._cwd = target
                 self.query_one("#terminal-prompt", Label).update(self._prompt)
+            else:
+                self._tlog(f"cd: no such directory: {target}", "bold red")
             return
         self._run_terminal_cmd_async(cmd)
 
     @work(thread=True)
     def _run_terminal_cmd_async(self, cmd: str) -> None:
-        run_command(cmd, cwd=self._cwd)
+        out, err, rc = run_command(cmd, cwd=self._cwd)
 
-    def _write_terminal_output(self, title: str, out: str, err: str, rc: int) -> None:
-        pass  # output destination TBD
+        def update():
+            if out.strip():
+                self._tlog(out.rstrip())
+            if err.strip():
+                self._tlog(err.rstrip(), "red")
+            if rc != 0 and not out.strip() and not err.strip():
+                self._tlog(f"[exit {rc}]", "dim red")
+
+        self.call_from_thread(update)
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
