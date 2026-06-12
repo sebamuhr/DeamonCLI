@@ -11,7 +11,7 @@ Stop googling the same commands over and over. DeamonCLI lives in your system tr
 ## What it does
 
 - **Search by intent** — type *"make sound louder"*, *"scan my network"*, or *"connect to server"* and it finds the right command
-- **413 commands** across 25 categories: Sound, WiFi, Files, SSH, Git, Security, Bluetooth, USB, AI & Ollama, and more
+- **658 commands** across 44 categories: Sound, WiFi, Files, SSH, Git, Security, AI & Ollama, Backup, VPN, Encryption, Virtualization, tmux, Shell Scripting, and more
 - **Built-in terminal** — run commands directly inside the app and keep working without switching windows
 - **System tray icon** — lives near your wifi/bluetooth icons; click to open or quit
 - **Runs in the background** — closing the window (X) keeps the app alive via tmux; click the tray icon to bring it back
@@ -120,6 +120,27 @@ The bottom panel is a real terminal session. You can:
 | Database CLI | SQLite, MySQL, PostgreSQL |
 | Cloud & DevOps | AWS CLI, gcloud, kubectl, Terraform |
 | AI & Ollama | Ollama, Claude Code, Gemini CLI, Aider, Fabric, Shell-GPT, embeddings, RAG |
+| Backup & Sync | rsync, restic, BorgBackup, rclone, tar |
+| VPN & Tunneling | WireGuard, OpenVPN, SSH tunnels, SOCKS proxy |
+| Encryption & LUKS | LUKS, cryptsetup, age, GPG, shred |
+| Filesystems & LVM | btrfs snapshots, LVM, ext4, NTFS, fsck |
+| Virtualization | KVM/QEMU, libvirt/virsh, VirtualBox, QEMU |
+| tmux | sessions, windows, panes, scripting |
+| Shell Scripting | strict mode, functions, arrays, traps, debug |
+| Web Servers | Nginx, Apache, Certbot/Let's Encrypt, Caddy |
+| Remote Desktop | xRDP, TigerVNC, x11vnc, SSH tunnelling |
+| Version Managers | nvm, pyenv, SDKMAN, mise |
+| Media & Video | ffmpeg, yt-dlp, ImageMagick |
+| PDF & Documents | pdftk, Ghostscript, OCR, Pandoc |
+| File Sharing | Samba, NFS, SSHFS |
+| Advanced Networking | iptables, UFW, bridges, VLANs, iperf3, tcpdump |
+| Text Processing | awk, sed, xargs, sort, cut, tr |
+| Hardware & Sensors | lm-sensors, nvidia-smi, hdparm, SMART |
+| Logs & Monitoring | journalctl, logwatch, dmesg, auth logs |
+| Flatpak, Snap & AppImage | flatpak, snap, AppImage, Wine |
+| jq & Data Tools | jq, yq, csvkit, csvsql |
+| Git Advanced | stash, cherry-pick, rebase, bisect, worktree |
+| Boot & GRUB | grub-update, UEFI, systemd-boot, efibootmgr |
 
 ---
 
@@ -139,7 +160,7 @@ The bottom panel is a real terminal session. You can:
 ```
 DeamonCLI/
 ├── linux_ref.py        # Main app (Textual TUI)
-├── commands_db.json    # All 413 commands
+├── commands_db.json    # All 658 commands across 44 categories
 ├── tray.py             # System tray daemon
 ├── launch.sh           # Smart launcher (tmux, geometry, tray)
 ├── install.sh          # Installer / uninstaller

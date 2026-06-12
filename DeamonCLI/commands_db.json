@@ -7490,6 +7490,4162 @@
         "documents"
       ],
       "can_run": true
+    },
+    {
+      "id": "bk-rsync-local",
+      "title": "Sync folder to another location",
+      "description": "Copies a folder to a destination, only transferring files that changed. The trailing slash on source means 'copy contents, not the folder itself'. Great for backups to an external drive.",
+      "command": "rsync -av --progress ~/Documents/ /media/backup/Documents/",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rsync",
+        "sync",
+        "copy",
+        "backup",
+        "folder",
+        "transfer"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rsync-delete",
+      "title": "Mirror folder (delete removed files)",
+      "description": "Syncs a folder and also deletes files from the destination that no longer exist in the source. Creates a true mirror. Use with care \u2014 deleted files are gone.",
+      "command": "rsync -av --delete ~/Documents/ /media/backup/Documents/",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rsync",
+        "mirror",
+        "sync",
+        "delete",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rsync-remote",
+      "title": "Sync to remote server over SSH",
+      "description": "Syncs a local folder to a remote server using SSH for transport. Replace user@server with your SSH target. Works the same as local rsync but tunnelled.",
+      "command": "rsync -avz --progress ~/Documents/ user@server:/backup/Documents/",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rsync",
+        "remote",
+        "ssh",
+        "sync",
+        "backup",
+        "server"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rsync-exclude",
+      "title": "Sync folder, excluding patterns",
+      "description": "Syncs a folder while skipping certain file types or directories. Add more --exclude options as needed. Useful for excluding caches, node_modules, .git, etc.",
+      "command": "rsync -av --exclude='node_modules' --exclude='*.tmp' ~/Projects/ /backup/Projects/",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rsync",
+        "exclude",
+        "ignore",
+        "sync",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-restic-init",
+      "title": "Initialize a restic backup repository",
+      "description": "Creates a new restic backup repository at the given path. You'll set an encryption password. The repository can be on a local disk, USB drive, SFTP server, or S3/B2 bucket.",
+      "command": "restic init --repo /backup/restic-repo",
+      "category": "Backup & Sync",
+      "keywords": [
+        "restic",
+        "backup",
+        "init",
+        "repository",
+        "create",
+        "encrypt"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-restic-backup",
+      "title": "Create a restic snapshot",
+      "description": "Backs up one or more directories into a restic repository. Creates a deduplicated, encrypted snapshot. Fast for incremental backups \u2014 only changed data is transferred.",
+      "command": "restic -r /backup/restic-repo backup ~/Documents ~/Pictures",
+      "category": "Backup & Sync",
+      "keywords": [
+        "restic",
+        "backup",
+        "snapshot",
+        "encrypt",
+        "deduplicate"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-restic-snapshots",
+      "title": "List all restic snapshots",
+      "description": "Shows all backup snapshots stored in a restic repository, including when each was taken and what paths were backed up.",
+      "command": "restic -r /backup/restic-repo snapshots",
+      "category": "Backup & Sync",
+      "keywords": [
+        "restic",
+        "list",
+        "snapshots",
+        "history",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-restic-restore",
+      "title": "Restore from a restic snapshot",
+      "description": "Restores files from a specific restic snapshot to a target directory. Replace 'latest' with a snapshot ID from 'restic snapshots' to restore a specific point in time.",
+      "command": "restic -r /backup/restic-repo restore latest --target ~/restore-here",
+      "category": "Backup & Sync",
+      "keywords": [
+        "restic",
+        "restore",
+        "recover",
+        "snapshot",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-restic-prune",
+      "title": "Prune old restic snapshots",
+      "description": "Removes old snapshots and the data only referenced by them, keeping the last 7 daily, 4 weekly, and 12 monthly snapshots. Frees up space in the repository.",
+      "command": "restic -r /backup/restic-repo forget --keep-daily 7 --keep-weekly 4 --keep-monthly 12 --prune",
+      "category": "Backup & Sync",
+      "keywords": [
+        "restic",
+        "prune",
+        "forget",
+        "cleanup",
+        "old",
+        "snapshots"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-borg-init",
+      "title": "Initialize a BorgBackup repository",
+      "description": "Creates a new Borg repository with repokey encryption. BorgBackup is excellent for automated server backups \u2014 deduplicated, compressed, and encrypted.",
+      "command": "borg init --encryption=repokey /backup/borg-repo",
+      "category": "Backup & Sync",
+      "keywords": [
+        "borg",
+        "borgbackup",
+        "init",
+        "repository",
+        "encrypt",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-borg-create",
+      "title": "Create a BorgBackup archive",
+      "description": "Creates a compressed and deduplicated Borg archive. The ::hostname-date part is the archive name. --stats shows space usage. --progress shows files as they are processed.",
+      "command": "borg create --stats --progress /backup/borg-repo::$(hostname)-$(date +%Y-%m-%d) ~/Documents ~/Pictures",
+      "category": "Backup & Sync",
+      "keywords": [
+        "borg",
+        "borgbackup",
+        "create",
+        "archive",
+        "backup",
+        "compress"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-borg-list",
+      "title": "List BorgBackup archives",
+      "description": "Lists all archives stored in a Borg repository with their creation time and size.",
+      "command": "borg list /backup/borg-repo",
+      "category": "Backup & Sync",
+      "keywords": [
+        "borg",
+        "borgbackup",
+        "list",
+        "archives",
+        "history"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rclone-install",
+      "title": "Install rclone (cloud sync tool)",
+      "description": "Installs rclone \u2014 the Swiss Army knife for cloud storage. Works with Google Drive, Dropbox, S3, Backblaze B2, OneDrive, SFTP, and 40+ more providers.",
+      "command": "curl https://rclone.org/install.sh | sudo bash",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rclone",
+        "install",
+        "cloud",
+        "sync",
+        "google",
+        "drive",
+        "s3",
+        "dropbox"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rclone-config",
+      "title": "Configure rclone cloud provider",
+      "description": "Launches rclone's interactive setup wizard to add a new cloud storage provider. Walk through the prompts to connect Google Drive, Dropbox, S3, etc.",
+      "command": "rclone config",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rclone",
+        "configure",
+        "setup",
+        "cloud",
+        "provider",
+        "google",
+        "drive"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rclone-sync",
+      "title": "Sync local folder to cloud with rclone",
+      "description": "Syncs a local folder to a cloud storage remote. Replace 'gdrive' with your configured remote name. Files deleted locally are also deleted in the cloud.",
+      "command": "rclone sync ~/Documents gdrive:backup/Documents --progress",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rclone",
+        "sync",
+        "cloud",
+        "google",
+        "drive",
+        "upload",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rclone-copy",
+      "title": "Copy local folder to cloud with rclone",
+      "description": "Copies a local folder to cloud storage without deleting anything in the destination. Safe option when you want to add files without risking deletion.",
+      "command": "rclone copy ~/Documents gdrive:backup/Documents --progress",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rclone",
+        "copy",
+        "cloud",
+        "upload",
+        "safe",
+        "backup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-rclone-mount",
+      "title": "Mount cloud storage as local folder",
+      "description": "Mounts a cloud storage remote as a local directory. You can then browse and open files as if they were local. Requires FUSE. Unmount with fusermount -u ~/cloud.",
+      "command": "rclone mount gdrive: ~/cloud --vfs-cache-mode writes &",
+      "category": "Backup & Sync",
+      "keywords": [
+        "rclone",
+        "mount",
+        "cloud",
+        "fuse",
+        "local",
+        "folder",
+        "drive"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-tar-create",
+      "title": "Create a compressed tar archive",
+      "description": "Creates a .tar.gz (gzip) compressed archive of a folder. -c=create, -z=gzip, -v=verbose (show files), -f=filename. Use -j for bzip2 or -J for xz compression instead.",
+      "command": "tar -czvf archive.tar.gz /path/to/folder/",
+      "category": "Backup & Sync",
+      "keywords": [
+        "tar",
+        "compress",
+        "archive",
+        "gzip",
+        "backup",
+        "create"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "bk-tar-extract",
+      "title": "Extract a tar archive",
+      "description": "Extracts a .tar.gz archive. -x=extract, -z=gzip (auto-detected), -v=verbose, -f=file. Works with .tar.gz, .tar.bz2, .tar.xz. Add -C /target/ to extract to a different directory.",
+      "command": "tar -xzvf archive.tar.gz",
+      "category": "Backup & Sync",
+      "keywords": [
+        "tar",
+        "extract",
+        "uncompress",
+        "archive",
+        "gzip",
+        "unpack"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-install-kvm",
+      "title": "Install KVM and libvirt",
+      "description": "Installs KVM (Kernel-based Virtual Machine), libvirt, QEMU, and virt-manager GUI. This is the best way to run VMs on Linux \u2014 hardware-level virtualisation with near-native performance.",
+      "command": "sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils virt-manager",
+      "category": "Virtualization",
+      "keywords": [
+        "kvm",
+        "libvirt",
+        "qemu",
+        "install",
+        "vm",
+        "virtual",
+        "machine",
+        "virt-manager"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-kvm-check",
+      "title": "Check if hardware supports KVM",
+      "description": "Checks if your CPU supports hardware virtualisation (required for KVM). Should output a number greater than 0. If 0, check BIOS to enable Intel VT-x or AMD-V.",
+      "command": "egrep -c '(vmx|svm)' /proc/cpuinfo",
+      "category": "Virtualization",
+      "keywords": [
+        "kvm",
+        "check",
+        "hardware",
+        "support",
+        "vmx",
+        "svm",
+        "cpu",
+        "virtualisation"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "virt-user-group",
+      "title": "Add user to libvirt group",
+      "description": "Adds your user to the libvirt and kvm groups so you can manage VMs without sudo. Log out and back in for the change to take effect.",
+      "command": "sudo usermod -aG libvirt,kvm $USER",
+      "category": "Virtualization",
+      "keywords": [
+        "libvirt",
+        "kvm",
+        "group",
+        "user",
+        "permission",
+        "sudo"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "virt-list",
+      "title": "List all VMs",
+      "description": "Lists all virtual machines managed by libvirt, showing their state (running, shut off, paused). --all shows VMs that are not running.",
+      "command": "virsh list --all",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "list",
+        "vms",
+        "virtual",
+        "machines",
+        "libvirt"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "virt-start",
+      "title": "Start a VM",
+      "description": "Starts a virtual machine by name. Find the name with 'virsh list --all'. The VM starts in the background \u2014 connect with virt-manager or virsh console.",
+      "command": "virsh start my-vm",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "start",
+        "vm",
+        "boot",
+        "run",
+        "virtual",
+        "machine"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-shutdown",
+      "title": "Gracefully shut down a VM",
+      "description": "Sends a shutdown signal to a VM (like pressing the power button). The guest OS handles the shutdown cleanly. Use 'virsh destroy' to force-stop if unresponsive.",
+      "command": "virsh shutdown my-vm",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "shutdown",
+        "stop",
+        "vm",
+        "virtual",
+        "machine",
+        "poweroff"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-destroy",
+      "title": "Force-stop a VM (hard power off)",
+      "description": "Immediately cuts power to a VM without a graceful shutdown. Use only if the VM is stuck and won't respond to virsh shutdown. Data loss may occur.",
+      "command": "virsh destroy my-vm",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "destroy",
+        "force",
+        "stop",
+        "kill",
+        "vm",
+        "poweroff"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-snapshot",
+      "title": "Take a VM snapshot",
+      "description": "Creates a snapshot of a VM's current state. You can revert to this snapshot later with 'virsh snapshot-revert'. Great before risky changes.",
+      "command": "virsh snapshot-create-as --domain my-vm --name \"before-update\" --description \"Before system update\"",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "snapshot",
+        "create",
+        "backup",
+        "checkpoint",
+        "vm"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-snapshot-revert",
+      "title": "Revert VM to a snapshot",
+      "description": "Restores a VM to a previously saved snapshot state. All changes made after the snapshot was taken are discarded.",
+      "command": "virsh snapshot-revert my-vm before-update",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "snapshot",
+        "revert",
+        "restore",
+        "rollback",
+        "vm"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-install-cmd",
+      "title": "Create a new VM from ISO",
+      "description": "Creates and starts a new VM using virt-install. Installs from an ISO file. Adjust RAM (--ram), CPUs, disk size (--disk size=), and ISO path as needed.",
+      "command": "virt-install --name ubuntu-vm --ram 4096 --vcpus 2 --disk size=40 --cdrom ~/Downloads/ubuntu.iso --os-variant ubuntu22.04",
+      "category": "Virtualization",
+      "keywords": [
+        "virt-install",
+        "create",
+        "vm",
+        "iso",
+        "install",
+        "new",
+        "virtual",
+        "machine"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-clone",
+      "title": "Clone an existing VM",
+      "description": "Creates a complete copy of an existing VM under a new name. Useful for quickly provisioning similar systems from a base template.",
+      "command": "virt-clone --original my-vm --name my-vm-clone --auto-clone",
+      "category": "Virtualization",
+      "keywords": [
+        "virt-clone",
+        "clone",
+        "copy",
+        "vm",
+        "duplicate",
+        "template"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-console",
+      "title": "Connect to VM console via terminal",
+      "description": "Connects to a VM's serial console directly in the terminal (no GUI needed). Works for headless VMs. Press Ctrl+] to exit the console.",
+      "command": "virsh console my-vm",
+      "category": "Virtualization",
+      "keywords": [
+        "virsh",
+        "console",
+        "connect",
+        "terminal",
+        "headless",
+        "vm",
+        "serial"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-vbox-install",
+      "title": "Install VirtualBox",
+      "description": "Installs Oracle VirtualBox \u2014 another popular VM platform, more user-friendly than KVM but with slightly lower performance. Good for desktop use.",
+      "command": "sudo apt install virtualbox virtualbox-ext-pack",
+      "category": "Virtualization",
+      "keywords": [
+        "virtualbox",
+        "vbox",
+        "install",
+        "vm",
+        "virtual",
+        "machine",
+        "oracle"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-vbox-list",
+      "title": "List VirtualBox VMs",
+      "description": "Lists all VirtualBox virtual machines. 'VBoxManage list runningvms' shows only the currently running ones.",
+      "command": "VBoxManage list vms",
+      "category": "Virtualization",
+      "keywords": [
+        "virtualbox",
+        "vboxmanage",
+        "list",
+        "vms",
+        "virtual",
+        "machines"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "virt-vbox-start-headless",
+      "title": "Start VirtualBox VM headless",
+      "description": "Starts a VirtualBox VM in headless mode (no GUI window). Useful for running VMs in the background. Connect to it with RDP or SSH.",
+      "command": "VBoxManage startvm \"MyVM\" --type headless",
+      "category": "Virtualization",
+      "keywords": [
+        "virtualbox",
+        "start",
+        "headless",
+        "vm",
+        "background",
+        "server"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "virt-qemu-quick",
+      "title": "Quick boot ISO with QEMU (no install)",
+      "description": "Boots directly from an ISO file with QEMU without creating a persistent VM. Great for testing a live Linux distro or rescue disk. Press Ctrl+Alt+G to release mouse.",
+      "command": "qemu-system-x86_64 -m 2G -cdrom ~/Downloads/ubuntu.iso -enable-kvm",
+      "category": "Virtualization",
+      "keywords": [
+        "qemu",
+        "boot",
+        "iso",
+        "test",
+        "live",
+        "quick",
+        "temporary"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-wg-install",
+      "title": "Install WireGuard",
+      "description": "Installs WireGuard \u2014 the modern, fast, and simple VPN protocol. Much simpler to configure than OpenVPN and faster in benchmarks. Built into the Linux kernel since 5.6.",
+      "command": "sudo apt install wireguard wireguard-tools",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "vpn",
+        "install",
+        "wg",
+        "tunnel"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-wg-keygen",
+      "title": "Generate WireGuard key pair",
+      "description": "Generates a private and public key pair for WireGuard. The private key stays on this machine; the public key is shared with peers. Store the private key securely.",
+      "command": "wg genkey | tee privatekey | wg pubkey > publickey && echo 'Private:' && cat privatekey && echo 'Public:' && cat publickey",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "keygen",
+        "key",
+        "generate",
+        "private",
+        "public",
+        "wg"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "vpn-wg-up",
+      "title": "Bring up WireGuard interface",
+      "description": "Activates a WireGuard VPN connection using a config file. The config is typically at /etc/wireguard/wg0.conf and contains your private key and peer info.",
+      "command": "sudo wg-quick up wg0",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "up",
+        "start",
+        "connect",
+        "vpn",
+        "wg0",
+        "wg-quick"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-wg-down",
+      "title": "Bring down WireGuard interface",
+      "description": "Disconnects the WireGuard VPN and removes the network interface. Use 'wg show' to check the connection status before and after.",
+      "command": "sudo wg-quick down wg0",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "down",
+        "stop",
+        "disconnect",
+        "vpn",
+        "wg0"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-wg-status",
+      "title": "Show WireGuard status",
+      "description": "Displays the current WireGuard interface status, including connected peers, their last handshake time, and data transferred. Great for diagnosing connection issues.",
+      "command": "sudo wg show",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "status",
+        "show",
+        "info",
+        "peer",
+        "connection",
+        "wg"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-wg-enable-boot",
+      "title": "Enable WireGuard on system boot",
+      "description": "Enables the WireGuard interface to automatically come up when the system boots. Uses systemd. The interface name (wg0) must match your config file name.",
+      "command": "sudo systemctl enable wg-quick@wg0",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "wireguard",
+        "autostart",
+        "boot",
+        "enable",
+        "systemd",
+        "wg0"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-openvpn-install",
+      "title": "Install OpenVPN client",
+      "description": "Installs the OpenVPN client. Many corporate VPNs and VPS providers use OpenVPN. You'll need a .ovpn config file from your VPN provider to connect.",
+      "command": "sudo apt install openvpn network-manager-openvpn-gnome",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "openvpn",
+        "install",
+        "vpn",
+        "client",
+        "network-manager"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-openvpn-connect",
+      "title": "Connect to OpenVPN with config file",
+      "description": "Connects to an OpenVPN server using a .ovpn configuration file from your VPN provider. Run as root or with sudo. Press Ctrl+C to disconnect.",
+      "command": "sudo openvpn --config ~/vpn-provider.ovpn",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "openvpn",
+        "connect",
+        "vpn",
+        "config",
+        "ovpn",
+        "client"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-ssh-socks",
+      "title": "Create SSH SOCKS5 proxy (dynamic tunnel)",
+      "description": "Creates a local SOCKS5 proxy on port 1080 through an SSH server. Configure your browser to use SOCKS5 localhost:1080 and all traffic routes through the remote server.",
+      "command": "ssh -D 1080 -C -q -N user@remote-server",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "ssh",
+        "socks",
+        "proxy",
+        "tunnel",
+        "socks5",
+        "dynamic",
+        "port"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-ssh-local-forward",
+      "title": "SSH local port forwarding",
+      "description": "Forwards a local port to a port on a remote machine through SSH. E.g. access a remote database at localhost:5432 even if it's not publicly exposed. -N means no shell.",
+      "command": "ssh -L 5432:localhost:5432 -N user@remote-server",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "ssh",
+        "tunnel",
+        "port",
+        "forward",
+        "local",
+        "database",
+        "proxy"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-ssh-remote-forward",
+      "title": "SSH remote port forwarding",
+      "description": "Exposes a local port on a remote server. Useful for temporarily exposing a local development server to the internet through a remote machine.",
+      "command": "ssh -R 8080:localhost:3000 -N user@remote-server",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "ssh",
+        "tunnel",
+        "reverse",
+        "remote",
+        "forward",
+        "expose",
+        "port"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vpn-check-ip",
+      "title": "Check your current public IP address",
+      "description": "Displays your current public IP address. Run this before and after connecting to a VPN to verify the VPN is routing your traffic correctly.",
+      "command": "curl -s ifconfig.me && echo",
+      "category": "VPN & Tunneling",
+      "keywords": [
+        "ip",
+        "public",
+        "check",
+        "vpn",
+        "verify",
+        "address",
+        "curl"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "enc-luks-format",
+      "title": "Encrypt a partition with LUKS",
+      "description": "Formats a block device with LUKS encryption. WARNING: This destroys all data on the device. Use lsblk to identify the correct device first. Never run on the wrong disk.",
+      "command": "sudo cryptsetup luksFormat /dev/sdX",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "luks",
+        "encrypt",
+        "partition",
+        "cryptsetup",
+        "format",
+        "disk"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-luks-open",
+      "title": "Open (unlock) a LUKS volume",
+      "description": "Unlocks a LUKS-encrypted partition and maps it to a name you choose (e.g. 'mydata'). The unlocked device appears at /dev/mapper/mydata and can then be mounted.",
+      "command": "sudo cryptsetup luksOpen /dev/sdX mydata",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "luks",
+        "open",
+        "unlock",
+        "decrypt",
+        "cryptsetup",
+        "mount"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-luks-close",
+      "title": "Close a LUKS volume",
+      "description": "Locks and unmounts a LUKS volume. Always close before physically removing an encrypted drive.",
+      "command": "sudo cryptsetup luksClose mydata",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "luks",
+        "close",
+        "lock",
+        "cryptsetup",
+        "unmount",
+        "eject"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-luks-status",
+      "title": "Check LUKS volume status",
+      "description": "Shows the status of an opened LUKS volume \u2014 cipher, key size, offset, and whether it's active.",
+      "command": "sudo cryptsetup status mydata",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "luks",
+        "status",
+        "info",
+        "cryptsetup",
+        "check"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-luks-add-key",
+      "title": "Add a new LUKS passphrase",
+      "description": "Adds an additional passphrase to a LUKS volume. LUKS supports up to 8 key slots \u2014 useful for setting up a recovery key or allowing multiple users.",
+      "command": "sudo cryptsetup luksAddKey /dev/sdX",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "luks",
+        "add",
+        "key",
+        "passphrase",
+        "extra",
+        "cryptsetup"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-age-install",
+      "title": "Install age (modern file encryption)",
+      "description": "Installs age \u2014 a simple, modern, and secure file encryption tool. Much simpler than GPG. Encrypt with a public key or a passphrase.",
+      "command": "sudo apt install age",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "age",
+        "encrypt",
+        "install",
+        "modern",
+        "file",
+        "encryption"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "enc-age-encrypt",
+      "title": "Encrypt a file with age",
+      "description": "Encrypts a file using age. -r specifies the recipient's public key (age1...) or use -p for a passphrase prompt. The result is an .age file.",
+      "command": "age -r age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p secrets.txt > secrets.txt.age",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "age",
+        "encrypt",
+        "file",
+        "recipient",
+        "key"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-age-decrypt",
+      "title": "Decrypt an age-encrypted file",
+      "description": "Decrypts an age-encrypted file using your private key (identity file). The -i flag specifies the identity file. Use -d flag with output redirection.",
+      "command": "age -d -i ~/.age/key.txt secrets.txt.age > secrets.txt",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "age",
+        "decrypt",
+        "file",
+        "identity",
+        "key"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-gpg-encrypt-file",
+      "title": "Encrypt a file with GPG",
+      "description": "Encrypts a file using GPG with AES-256 symmetric encryption and a passphrase. The output file will have a .gpg extension. No key setup required.",
+      "command": "gpg --symmetric --cipher-algo AES256 secret-file.txt",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "gpg",
+        "encrypt",
+        "file",
+        "symmetric",
+        "aes256",
+        "passphrase"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-gpg-decrypt-file",
+      "title": "Decrypt a GPG file",
+      "description": "Decrypts a GPG-encrypted file. GPG will prompt for the passphrase. The decrypted output goes to the original filename (without .gpg).",
+      "command": "gpg --decrypt secret-file.txt.gpg > secret-file.txt",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "gpg",
+        "decrypt",
+        "file",
+        "passphrase"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "enc-shred",
+      "title": "Securely delete a file",
+      "description": "Overwrites a file multiple times before deleting to prevent recovery. More secure than 'rm' but not guaranteed on SSDs/flash drives due to wear levelling. For SSDs use disk encryption instead.",
+      "command": "shred -vuz -n 3 secret-file.txt",
+      "category": "Encryption & LUKS",
+      "keywords": [
+        "shred",
+        "delete",
+        "secure",
+        "wipe",
+        "overwrite",
+        "file",
+        "destroy"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-lsblk",
+      "title": "List all block devices and partitions",
+      "description": "Shows all block devices (disks, partitions, loop devices) in a tree layout with sizes and mount points. One of the most useful commands before doing any disk work.",
+      "command": "lsblk -f",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "lsblk",
+        "list",
+        "disk",
+        "partition",
+        "block",
+        "device",
+        "storage"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "fs-parted",
+      "title": "Open disk with parted (partition editor)",
+      "description": "Launches GNU parted for the specified disk. Type 'print' to see current partition table, 'help' for all commands. Replace /dev/sdb with your target disk.",
+      "command": "sudo parted /dev/sdb",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "parted",
+        "partition",
+        "disk",
+        "edit",
+        "table",
+        "gpt",
+        "mbr"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-format-ext4",
+      "title": "Format partition as ext4",
+      "description": "Formats a partition with the ext4 filesystem \u2014 the standard Linux filesystem. Replace /dev/sdX1 with your partition. WARNING: this destroys all data on the partition.",
+      "command": "sudo mkfs.ext4 /dev/sdX1",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "mkfs",
+        "ext4",
+        "format",
+        "partition",
+        "filesystem",
+        "create"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-format-btrfs",
+      "title": "Format partition as btrfs",
+      "description": "Formats a partition with btrfs \u2014 a modern copy-on-write filesystem with built-in snapshots, RAID, and compression. Increasingly popular on modern Linux systems.",
+      "command": "sudo mkfs.btrfs /dev/sdX1",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "mkfs",
+        "btrfs",
+        "format",
+        "partition",
+        "filesystem",
+        "cow",
+        "snapshot"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-btrfs-snapshot",
+      "title": "Create a btrfs subvolume snapshot",
+      "description": "Creates a read-write snapshot of a btrfs subvolume. Snapshots are near-instant and take no extra space until data diverges. Great for pre-update checkpoints.",
+      "command": "sudo btrfs subvolume snapshot /mnt/data /mnt/data-snapshot",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "btrfs",
+        "snapshot",
+        "subvolume",
+        "backup",
+        "copy",
+        "cow"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-btrfs-list",
+      "title": "List btrfs subvolumes",
+      "description": "Lists all subvolumes and snapshots on a btrfs filesystem mount point.",
+      "command": "sudo btrfs subvolume list /",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "btrfs",
+        "list",
+        "subvolume",
+        "snapshot",
+        "filesystem"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-btrfs-compress",
+      "title": "Enable btrfs compression on a directory",
+      "description": "Enables transparent zstd compression on a directory and re-compresses existing files. zstd offers an excellent balance of speed and compression ratio.",
+      "command": "sudo btrfs property set /data compression zstd",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "btrfs",
+        "compression",
+        "zstd",
+        "compress",
+        "filesystem",
+        "storage"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-lvm-pvs",
+      "title": "List LVM physical volumes",
+      "description": "Displays all physical volumes in the LVM setup \u2014 the raw block devices or partitions that have been added to LVM.",
+      "command": "sudo pvs",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "lvm",
+        "pvs",
+        "physical",
+        "volume",
+        "list",
+        "disk"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-lvm-vgs",
+      "title": "List LVM volume groups",
+      "description": "Displays all LVM volume groups, their size, and free space. Volume groups pool together physical volumes into one large storage pool.",
+      "command": "sudo vgs",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "lvm",
+        "vgs",
+        "volume",
+        "group",
+        "list",
+        "storage",
+        "pool"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-lvm-lvs",
+      "title": "List LVM logical volumes",
+      "description": "Displays all LVM logical volumes \u2014 the virtual partitions carved out of volume groups. These are what you format and mount.",
+      "command": "sudo lvs",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "lvm",
+        "lvs",
+        "logical",
+        "volume",
+        "list",
+        "partition"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-lvm-extend",
+      "title": "Extend an LVM logical volume",
+      "description": "Grows a logical volume by a specified amount and also resizes the filesystem inside it. Replace vg0/lv0 with your volume group and logical volume names.",
+      "command": "sudo lvextend -L +10G /dev/vg0/lv0 && sudo resize2fs /dev/vg0/lv0",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "lvm",
+        "extend",
+        "grow",
+        "resize",
+        "logical",
+        "volume",
+        "space"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-ntfs-mount",
+      "title": "Mount an NTFS partition (Windows drive)",
+      "description": "Installs ntfs-3g driver and mounts an NTFS partition (Windows drive) with full read-write access. Replace /dev/sdX1 and /mnt/windows as needed.",
+      "command": "sudo apt install ntfs-3g && sudo mount -t ntfs-3g /dev/sdX1 /mnt/windows",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "ntfs",
+        "mount",
+        "windows",
+        "drive",
+        "ntfs-3g",
+        "partition",
+        "read-write"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "fs-check-disk",
+      "title": "Check and repair filesystem (fsck)",
+      "description": "Checks and optionally repairs a filesystem for errors. Run only on unmounted filesystems. -y automatically answers yes to repairs. Use lsblk to find the device.",
+      "command": "sudo fsck -y /dev/sdX1",
+      "category": "Filesystems & LVM",
+      "keywords": [
+        "fsck",
+        "check",
+        "repair",
+        "filesystem",
+        "errors",
+        "disk",
+        "corrupted"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-grub-update",
+      "title": "Update GRUB bootloader config",
+      "description": "Regenerates the GRUB configuration file \u2014 run this after installing a new kernel, changing /etc/default/grub settings, or adding a new OS. Required for changes to take effect.",
+      "command": "sudo update-grub",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "grub",
+        "update",
+        "bootloader",
+        "config",
+        "kernel",
+        "boot"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-grub-install",
+      "title": "Reinstall GRUB to a disk",
+      "description": "Re-installs the GRUB bootloader to the MBR/EFI partition of a disk. Run this when GRUB is broken (e.g. after reinstalling Windows). Replace /dev/sda with your boot disk.",
+      "command": "sudo grub-install /dev/sda && sudo update-grub",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "grub",
+        "install",
+        "reinstall",
+        "bootloader",
+        "mbr",
+        "efi",
+        "repair"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-grub-timeout",
+      "title": "Change GRUB boot menu timeout",
+      "description": "Edits the GRUB timeout (seconds to show the menu before auto-booting). Set GRUB_TIMEOUT=0 to skip the menu entirely, or -1 to wait forever. Then run update-grub.",
+      "command": "sudo nano /etc/default/grub",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "grub",
+        "timeout",
+        "menu",
+        "boot",
+        "speed",
+        "delay",
+        "config"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-list-kernels",
+      "title": "List installed kernels",
+      "description": "Lists all installed Linux kernels on the system. Useful when you want to remove old kernels to free up space in /boot.",
+      "command": "dpkg --list | grep linux-image",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "kernel",
+        "list",
+        "installed",
+        "dpkg",
+        "linux-image",
+        "boot"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "boot-efi-list",
+      "title": "List EFI boot entries",
+      "description": "Lists all EFI boot entries registered in the UEFI firmware. Shows which OS/bootloaders the firmware knows about and their order.",
+      "command": "sudo efibootmgr -v",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "efi",
+        "uefi",
+        "boot",
+        "entry",
+        "list",
+        "efibootmgr",
+        "firmware"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-systemd-boot",
+      "title": "Install systemd-boot (alternative to GRUB)",
+      "description": "Installs systemd-boot (formerly gummiboot) as the EFI bootloader. Simpler than GRUB, fast, and integrated with systemd. Only works on UEFI systems.",
+      "command": "sudo bootctl install",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "systemd-boot",
+        "bootctl",
+        "uefi",
+        "efi",
+        "boot",
+        "install",
+        "alternative",
+        "grub"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "boot-repair-mode",
+      "title": "Enter emergency/rescue mode",
+      "description": "Reboots into systemd emergency mode (minimal, root shell) to diagnose serious boot problems. Useful when the system won't boot normally.",
+      "command": "sudo systemctl rescue",
+      "category": "Boot & GRUB",
+      "keywords": [
+        "rescue",
+        "emergency",
+        "mode",
+        "boot",
+        "repair",
+        "shell",
+        "recovery"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "tmux-new",
+      "title": "Start a new named tmux session",
+      "description": "Creates a new tmux session with a name. Naming sessions makes it easy to reattach later. Inside tmux: Ctrl+B is the prefix for all commands.",
+      "command": "tmux new-session -s mysession",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "new",
+        "session",
+        "start",
+        "named"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-attach",
+      "title": "Attach to an existing tmux session",
+      "description": "Reattaches to a running tmux session by name. If you only have one session, 'tmux attach' works without the -t flag.",
+      "command": "tmux attach -t mysession",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "attach",
+        "reconnect",
+        "session",
+        "reattach"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "tmux-list",
+      "title": "List all tmux sessions",
+      "description": "Shows all running tmux sessions with their IDs, names, and creation times. Use this to find the name to attach to.",
+      "command": "tmux list-sessions",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "list",
+        "sessions",
+        "show",
+        "running"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-kill",
+      "title": "Kill a tmux session",
+      "description": "Terminates a tmux session and all processes running inside it. Use 'tmux kill-server' to stop all sessions at once.",
+      "command": "tmux kill-session -t mysession",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "kill",
+        "stop",
+        "session",
+        "terminate",
+        "end"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "tmux-split-h",
+      "title": "Split tmux pane horizontally",
+      "description": "Splits the current pane into two side-by-side panes. Prefix is Ctrl+B. In tmux you can also press Ctrl+B then % to split horizontally.",
+      "command": "tmux split-window -h",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "split",
+        "pane",
+        "horizontal",
+        "side",
+        "window"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-split-v",
+      "title": "Split tmux pane vertically",
+      "description": "Splits the current pane into two stacked panes (one above the other). In tmux you can also press Ctrl+B then \" to split vertically.",
+      "command": "tmux split-window -v",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "split",
+        "pane",
+        "vertical",
+        "above",
+        "below",
+        "window"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-new-window",
+      "title": "Create a new tmux window (tab)",
+      "description": "Creates a new window (like a new tab) in the current tmux session. Switch between windows with Ctrl+B then the window number, or Ctrl+B n/p for next/previous.",
+      "command": "tmux new-window",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "window",
+        "tab",
+        "new",
+        "create"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-rename",
+      "title": "Rename current tmux window",
+      "description": "Renames the current window in the tmux status bar. Useful when you have many windows open and want to track what each one is for.",
+      "command": "tmux rename-window my-task",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "rename",
+        "window",
+        "name",
+        "label"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "tmux-send-keys",
+      "title": "Send a command to a tmux pane",
+      "description": "Runs a command in a specific tmux pane from outside tmux. Useful in scripts to automate running commands in tmux sessions.",
+      "command": "tmux send-keys -t mysession:0 'ls -la' Enter",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "send",
+        "keys",
+        "pane",
+        "script",
+        "automate",
+        "command"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "tmux-copy-mode",
+      "title": "Enter tmux copy mode (scroll back)",
+      "description": "Enters copy mode where you can scroll up through the terminal history using arrow keys or Vim keys. Press q to exit. Use Ctrl+B [ shortcut in a live session.",
+      "command": "tmux copy-mode",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "copy",
+        "mode",
+        "scroll",
+        "history",
+        "buffer",
+        "vi"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-config",
+      "title": "Edit tmux configuration",
+      "description": "Opens the tmux config file. Common settings: change the prefix key, set vi keys in copy mode, enable mouse support (set -g mouse on), customise the status bar.",
+      "command": "nano ~/.tmux.conf",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "config",
+        "configure",
+        "settings",
+        "prefix",
+        "mouse",
+        "tmux.conf"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "tmux-reload",
+      "title": "Reload tmux configuration",
+      "description": "Reloads the tmux config file without restarting. Run this inside tmux after editing ~/.tmux.conf for changes to take effect immediately.",
+      "command": "tmux source-file ~/.tmux.conf",
+      "category": "tmux",
+      "keywords": [
+        "tmux",
+        "reload",
+        "config",
+        "source",
+        "refresh",
+        "settings"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "sh-shebang",
+      "title": "Bash script shebang line",
+      "description": "The first line of every bash script. Tells the OS to use bash to run this file. After adding the shebang, make it executable with: chmod +x script.sh",
+      "command": "#!/usr/bin/env bash",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "shebang",
+        "script",
+        "start",
+        "#!/",
+        "env"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-set-strict",
+      "title": "Enable strict mode in bash scripts",
+      "description": "These three options make bash scripts safer: -e exits on error, -u treats unset variables as errors, -o pipefail fails if any command in a pipe fails. Put this at the top of every script.",
+      "command": "set -euo pipefail",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "strict",
+        "set",
+        "pipefail",
+        "script",
+        "safe",
+        "error"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-variables",
+      "title": "Bash variable assignment and use",
+      "description": "How to define and use variables in bash. No spaces around =. Use $VAR or ${VAR} to reference. ${VAR:-default} gives a default if VAR is unset.",
+      "command": "NAME=\"World\"\necho \"Hello, ${NAME}!\"\nGREETING=\"${NAME:-stranger}\"",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "variable",
+        "assign",
+        "define",
+        "use",
+        "script",
+        "string"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-if-else",
+      "title": "Bash if/else conditional",
+      "description": "Basic if/else structure in bash. Common tests: -f file (file exists), -d dir (directory exists), -z string (empty), -n string (not empty), [ a = b ] (string equals).",
+      "command": "if [ -f \"/etc/hosts\" ]; then\n  echo \"hosts file exists\"\nelse\n  echo \"no hosts file\"\nfi",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "if",
+        "else",
+        "condition",
+        "test",
+        "check",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-for-loop",
+      "title": "Bash for loop (iterate list)",
+      "description": "Loops over a list of items. The list can be files (*.txt), a range ({1..10}), command output ($(ls)), or an explicit list.",
+      "command": "for item in one two three; do\n  echo \"Item: $item\"\ndone",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "for",
+        "loop",
+        "iterate",
+        "list",
+        "script",
+        "range"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-while-loop",
+      "title": "Bash while loop",
+      "description": "Repeats a block while a condition is true. 'while read line' is very common for processing lines of a file or command output one by one.",
+      "command": "while read line; do\n  echo \"Got: $line\"\ndone < /etc/hosts",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "while",
+        "loop",
+        "read",
+        "line",
+        "file",
+        "process",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-function",
+      "title": "Define a bash function",
+      "description": "Defines a reusable function in bash. $1, $2, etc. are positional arguments. $@ means all arguments. Functions are called just like commands.",
+      "command": "greet() {\n  local name=\"$1\"\n  echo \"Hello, ${name}!\"\n}\ngreet \"World\"",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "function",
+        "define",
+        "reusable",
+        "args",
+        "arguments",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-arrays",
+      "title": "Bash array operations",
+      "description": "How to create, access, and iterate arrays in bash. Arrays are zero-indexed. ${arr[@]} expands all elements. ${#arr[@]} gives the count.",
+      "command": "arr=(one two three)\necho ${arr[0]}    # first element\necho ${arr[@]}   # all elements\necho ${#arr[@]}  # count",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "array",
+        "list",
+        "element",
+        "index",
+        "iterate",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-process-subst",
+      "title": "Bash process substitution",
+      "description": "Process substitution <(cmd) lets you pass the output of a command as if it were a file. Useful when a command needs file arguments but you want to use command output.",
+      "command": "diff <(ls dir1/) <(ls dir2/)",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "process",
+        "substitution",
+        "diff",
+        "pipe",
+        "advanced",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-heredoc",
+      "title": "Bash heredoc (multi-line string)",
+      "description": "Heredoc lets you write multi-line strings in bash. Everything between <<'EOF' and EOF is treated as a string. Single-quoted EOF prevents variable expansion; double-quoted allows it.",
+      "command": "cat <<'EOF'\nThis is a\nmulti-line\nstring\nEOF",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "heredoc",
+        "multiline",
+        "string",
+        "eof",
+        "cat",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-trap",
+      "title": "Bash trap (cleanup on exit/error)",
+      "description": "trap runs a command when the script exits, regardless of how it exits (normal exit, error, Ctrl+C). Useful for cleaning up temp files or printing error messages.",
+      "command": "trap 'echo \"Script failed at line $LINENO\"; rm -f /tmp/mytemp' ERR EXIT",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "trap",
+        "cleanup",
+        "exit",
+        "error",
+        "signal",
+        "script",
+        "temp"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-debug",
+      "title": "Debug a bash script",
+      "description": "Runs a bash script in debug mode \u2014 prints each command before executing it. Extremely useful for finding where a script fails. You can also add 'set -x' inside the script.",
+      "command": "bash -x your-script.sh",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "debug",
+        "trace",
+        "set-x",
+        "verbose",
+        "script",
+        "troubleshoot"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "sh-regex-match",
+      "title": "Bash regex matching with =~",
+      "description": "Tests if a string matches a regex using bash's built-in =~ operator. No quotes around the regex. Captured groups are in BASH_REMATCH array.",
+      "command": "if [[ \"hello world\" =~ ^hello\\ (.+)$ ]]; then\n  echo \"Matched: ${BASH_REMATCH[1]}\"\nfi",
+      "category": "Shell Scripting",
+      "keywords": [
+        "bash",
+        "regex",
+        "match",
+        "=~",
+        "pattern",
+        "string",
+        "test",
+        "script"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-nginx-install",
+      "title": "Install Nginx web server",
+      "description": "Installs Nginx \u2014 a high-performance web server and reverse proxy. Used for serving websites, load balancing, and proxying requests to backend apps (Node.js, Python, etc.).",
+      "command": "sudo apt install nginx && sudo systemctl enable nginx && sudo systemctl start nginx",
+      "category": "Web Servers",
+      "keywords": [
+        "nginx",
+        "install",
+        "web",
+        "server",
+        "proxy",
+        "enable",
+        "start"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-nginx-test",
+      "title": "Test Nginx configuration",
+      "description": "Validates the Nginx configuration files for syntax errors before reloading. Always run this before reloading Nginx to avoid breaking a running server.",
+      "command": "sudo nginx -t",
+      "category": "Web Servers",
+      "keywords": [
+        "nginx",
+        "test",
+        "config",
+        "validate",
+        "syntax",
+        "check"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-nginx-reload",
+      "title": "Reload Nginx (apply config changes)",
+      "description": "Reloads Nginx's configuration without dropping active connections. Use this after editing a site config. 'restart' would briefly interrupt traffic.",
+      "command": "sudo systemctl reload nginx",
+      "category": "Web Servers",
+      "keywords": [
+        "nginx",
+        "reload",
+        "restart",
+        "config",
+        "apply",
+        "systemctl"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-nginx-site-enable",
+      "title": "Enable an Nginx site",
+      "description": "Creates a symlink from sites-available to sites-enabled to activate a virtual host config. Replace mysite with your config filename (without .conf).",
+      "command": "sudo ln -s /etc/nginx/sites-available/mysite /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx",
+      "category": "Web Servers",
+      "keywords": [
+        "nginx",
+        "enable",
+        "site",
+        "virtual",
+        "host",
+        "symlink",
+        "activate"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-apache-install",
+      "title": "Install Apache web server",
+      "description": "Installs the Apache 2 web server. Apache is the most widely deployed web server, great for shared hosting and .htaccess based configuration.",
+      "command": "sudo apt install apache2 && sudo systemctl enable apache2 && sudo systemctl start apache2",
+      "category": "Web Servers",
+      "keywords": [
+        "apache",
+        "apache2",
+        "install",
+        "web",
+        "server",
+        "httpd",
+        "enable"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-apache-module",
+      "title": "Enable Apache module",
+      "description": "Enables a module in Apache2 and reloads the server. Common modules: rewrite (URL rewriting), ssl (HTTPS), headers, proxy. Disabling: a2dismod.",
+      "command": "sudo a2enmod rewrite && sudo systemctl reload apache2",
+      "category": "Web Servers",
+      "keywords": [
+        "apache",
+        "apache2",
+        "module",
+        "enable",
+        "a2enmod",
+        "rewrite",
+        "ssl"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-certbot-install",
+      "title": "Install Certbot (free HTTPS certificates)",
+      "description": "Installs Certbot to get free Let's Encrypt SSL/TLS certificates for your domain. Makes your site HTTPS. Automatically handles renewal.",
+      "command": "sudo apt install certbot python3-certbot-nginx",
+      "category": "Web Servers",
+      "keywords": [
+        "certbot",
+        "letsencrypt",
+        "ssl",
+        "tls",
+        "https",
+        "certificate",
+        "install",
+        "free"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-certbot-cert",
+      "title": "Get a free SSL certificate for a domain",
+      "description": "Requests a Let's Encrypt certificate for your domain and automatically configures Nginx to use it. Replace example.com with your domain. Your server must be publicly reachable.",
+      "command": "sudo certbot --nginx -d example.com -d www.example.com",
+      "category": "Web Servers",
+      "keywords": [
+        "certbot",
+        "ssl",
+        "certificate",
+        "https",
+        "letsencrypt",
+        "nginx",
+        "domain"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-certbot-renew",
+      "title": "Renew Let's Encrypt certificates",
+      "description": "Renews all Let's Encrypt certificates that are near expiry. Certbot sets up a cron job to do this automatically, but you can run it manually to test.",
+      "command": "sudo certbot renew --dry-run",
+      "category": "Web Servers",
+      "keywords": [
+        "certbot",
+        "renew",
+        "letsencrypt",
+        "ssl",
+        "certificate",
+        "auto"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "web-python-server",
+      "title": "Serve current directory over HTTP (Python)",
+      "description": "Starts a simple HTTP file server on port 8000 in the current directory. Useful for quickly sharing files on a local network or testing HTML files. No installation needed.",
+      "command": "python3 -m http.server 8000",
+      "category": "Web Servers",
+      "keywords": [
+        "python",
+        "http",
+        "server",
+        "serve",
+        "files",
+        "local",
+        "quick",
+        "8000"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "web-caddy-install",
+      "title": "Install Caddy web server",
+      "description": "Installs Caddy \u2014 a modern web server that automatically gets and renews HTTPS certificates. Its config (Caddyfile) is much simpler than Nginx or Apache.",
+      "command": "sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list && sudo apt update && sudo apt install caddy",
+      "category": "Web Servers",
+      "keywords": [
+        "caddy",
+        "install",
+        "web",
+        "server",
+        "https",
+        "auto",
+        "modern"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "rdp-xrdp-install",
+      "title": "Install xRDP (Windows RDP server for Linux)",
+      "description": "Installs xRDP, which allows Windows Remote Desktop (RDP) clients to connect to your Linux desktop. Great for accessing Linux from Windows using the built-in Remote Desktop app.",
+      "command": "sudo apt install xrdp && sudo systemctl enable xrdp && sudo systemctl start xrdp",
+      "category": "Remote Desktop",
+      "keywords": [
+        "xrdp",
+        "rdp",
+        "remote",
+        "desktop",
+        "windows",
+        "install",
+        "enable"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "rdp-xrdp-fix-color",
+      "title": "Fix xRDP black screen on Ubuntu",
+      "description": "Fixes the common black screen issue when connecting via RDP to Ubuntu. Edits the xRDP session start script to use the correct desktop session.",
+      "command": "echo 'export GNOME_SHELL_SESSION_MODE=ubuntu\nexport XDG_CURRENT_DESKTOP=ubuntu:GNOME\nexport XDG_SESSION_TYPE=x11' > ~/.xsessionrc",
+      "category": "Remote Desktop",
+      "keywords": [
+        "xrdp",
+        "black",
+        "screen",
+        "fix",
+        "ubuntu",
+        "gnome",
+        "session"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "rdp-vnc-install",
+      "title": "Install TigerVNC server",
+      "description": "Installs TigerVNC \u2014 a fast VNC server for Linux. VNC lets you see and control the Linux desktop from any VNC client (Windows, Mac, phone).",
+      "command": "sudo apt install tigervnc-standalone-server tigervnc-common",
+      "category": "Remote Desktop",
+      "keywords": [
+        "vnc",
+        "tigervnc",
+        "install",
+        "remote",
+        "desktop",
+        "server"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "rdp-vnc-start",
+      "title": "Start VNC server session",
+      "description": "Starts a VNC server on display :1 (port 5901). Sets resolution to 1920x1080. First run will ask you to set a VNC password. Connect with any VNC viewer to your-ip:5901.",
+      "command": "vncserver :1 -geometry 1920x1080 -depth 24",
+      "category": "Remote Desktop",
+      "keywords": [
+        "vnc",
+        "start",
+        "server",
+        "session",
+        "display",
+        "port",
+        "5901"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "rdp-vnc-kill",
+      "title": "Stop VNC server session",
+      "description": "Stops a running VNC server on a specific display number.",
+      "command": "vncserver -kill :1",
+      "category": "Remote Desktop",
+      "keywords": [
+        "vnc",
+        "stop",
+        "kill",
+        "server",
+        "session",
+        "display"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "rdp-vnc-tunnel",
+      "title": "Tunnel VNC over SSH (secure)",
+      "description": "Creates an SSH tunnel to forward VNC traffic securely. VNC is unencrypted by default \u2014 always tunnel through SSH when connecting over the internet. Then connect your VNC client to localhost:5901.",
+      "command": "ssh -L 5901:localhost:5901 -N user@remote-server",
+      "category": "Remote Desktop",
+      "keywords": [
+        "vnc",
+        "ssh",
+        "tunnel",
+        "secure",
+        "encrypt",
+        "forward",
+        "remote"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "rdp-x11vnc",
+      "title": "Share current desktop session with x11vnc",
+      "description": "Shares your current (already running) desktop session via VNC. Unlike TigerVNC which creates a new session, x11vnc mirrors what's currently on screen. Password required on first run with -storepasswd.",
+      "command": "x11vnc -display :0 -forever -usepw",
+      "category": "Remote Desktop",
+      "keywords": [
+        "x11vnc",
+        "vnc",
+        "share",
+        "desktop",
+        "current",
+        "mirror",
+        "display"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-nvm-install",
+      "title": "Install nvm (Node Version Manager)",
+      "description": "Installs nvm \u2014 lets you install and switch between multiple Node.js versions without sudo. The most popular way to manage Node on Linux. Restart your shell after installing.",
+      "command": "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash",
+      "category": "Version Managers",
+      "keywords": [
+        "nvm",
+        "node",
+        "nodejs",
+        "install",
+        "version",
+        "manager"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-nvm-install-node",
+      "title": "Install a Node.js version with nvm",
+      "description": "Installs a specific Node.js version and sets it as the current version. Use 'nvm ls-remote' to see all available versions. 'lts' installs the latest LTS version.",
+      "command": "nvm install --lts && nvm use --lts",
+      "category": "Version Managers",
+      "keywords": [
+        "nvm",
+        "node",
+        "install",
+        "lts",
+        "version",
+        "use"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "vm-nvm-list",
+      "title": "List installed Node.js versions",
+      "description": "Shows all Node.js versions installed via nvm, with the current active version highlighted. 'nvm ls-remote' shows all downloadable versions.",
+      "command": "nvm list",
+      "category": "Version Managers",
+      "keywords": [
+        "nvm",
+        "node",
+        "list",
+        "versions",
+        "installed"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "vm-nvm-switch",
+      "title": "Switch Node.js version with nvm",
+      "description": "Switches the active Node.js version for the current shell session. To set a default version, use 'nvm alias default 20'.",
+      "command": "nvm use 20",
+      "category": "Version Managers",
+      "keywords": [
+        "nvm",
+        "node",
+        "switch",
+        "use",
+        "version",
+        "change"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-pyenv-install",
+      "title": "Install pyenv (Python Version Manager)",
+      "description": "Installs pyenv \u2014 lets you install and switch between multiple Python versions. Much better than using the system Python or managing conda environments.",
+      "command": "curl https://pyenv.run | bash",
+      "category": "Version Managers",
+      "keywords": [
+        "pyenv",
+        "python",
+        "install",
+        "version",
+        "manager"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-pyenv-install-python",
+      "title": "Install a Python version with pyenv",
+      "description": "Downloads and compiles a specific Python version. Use 'pyenv install --list' to see all available versions. This may take a few minutes to compile.",
+      "command": "pyenv install 3.12.0 && pyenv global 3.12.0",
+      "category": "Version Managers",
+      "keywords": [
+        "pyenv",
+        "python",
+        "install",
+        "version",
+        "3.12",
+        "compile"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-pyenv-versions",
+      "title": "List Python versions (pyenv)",
+      "description": "Lists all Python versions installed via pyenv, showing which is currently active globally and locally.",
+      "command": "pyenv versions",
+      "category": "Version Managers",
+      "keywords": [
+        "pyenv",
+        "python",
+        "list",
+        "versions",
+        "installed",
+        "active"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "vm-sdkman-install",
+      "title": "Install SDKMAN (Java/Groovy/Kotlin manager)",
+      "description": "Installs SDKMAN \u2014 the best way to manage Java, Groovy, Kotlin, Gradle, Maven, and other JVM tools on Linux. Handles multiple versions cleanly.",
+      "command": "curl -s 'https://get.sdkman.io' | bash",
+      "category": "Version Managers",
+      "keywords": [
+        "sdkman",
+        "java",
+        "jvm",
+        "install",
+        "version",
+        "manager",
+        "groovy",
+        "kotlin"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-sdkman-java",
+      "title": "Install a Java version with SDKMAN",
+      "description": "Installs a specific Java version via SDKMAN. 'sdk list java' shows all available distributions (OpenJDK, GraalVM, Corretto, Temurin). The identifier format is version+distro.",
+      "command": "sdk install java 21-tem",
+      "category": "Version Managers",
+      "keywords": [
+        "sdkman",
+        "java",
+        "install",
+        "version",
+        "temurin",
+        "openjdk",
+        "21"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "vm-mise-install",
+      "title": "Install mise (universal version manager)",
+      "description": "Installs mise (formerly rtx) \u2014 a fast, universal version manager for Node, Python, Ruby, Go, Java, and 100+ more tools. Written in Rust, much faster than asdf.",
+      "command": "curl https://mise.run | sh",
+      "category": "Version Managers",
+      "keywords": [
+        "mise",
+        "rtx",
+        "asdf",
+        "version",
+        "manager",
+        "universal",
+        "install",
+        "nodejs",
+        "python"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-install",
+      "title": "Install ffmpeg",
+      "description": "Installs ffmpeg \u2014 the most powerful open-source tool for audio/video conversion, transcoding, streaming, and processing. Used by almost every media app under the hood.",
+      "command": "sudo apt install ffmpeg",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "install",
+        "video",
+        "audio",
+        "convert",
+        "transcode",
+        "media"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "med-ffmpeg-convert",
+      "title": "Convert video to MP4 (H.264)",
+      "description": "Converts any video file to MP4 with H.264 video and AAC audio \u2014 the most universally compatible format. ffmpeg auto-detects the input format. Output quality is controlled with -crf (18=high quality, 28=smaller file).",
+      "command": "ffmpeg -i input.mkv -c:v libx264 -crf 23 -c:a aac output.mp4",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "convert",
+        "mp4",
+        "h264",
+        "aac",
+        "video",
+        "transcode"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-extract-audio",
+      "title": "Extract audio from video (ffmpeg)",
+      "description": "Extracts the audio track from a video file into a separate audio file without re-encoding (-c:a copy means copy the audio stream as-is).",
+      "command": "ffmpeg -i video.mp4 -vn -c:a copy audio.aac",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "extract",
+        "audio",
+        "mp3",
+        "aac",
+        "video",
+        "strip",
+        "sound"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-compress",
+      "title": "Compress video to smaller file size",
+      "description": "Reduces video file size by re-encoding with a higher CRF value (28 vs the default 23). Bigger CRF = smaller file, lower quality. Good for sharing or storing on limited space.",
+      "command": "ffmpeg -i input.mp4 -vcodec libx264 -crf 28 output-compressed.mp4",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "compress",
+        "reduce",
+        "size",
+        "smaller",
+        "video",
+        "crf"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-screenshot",
+      "title": "Take screenshot from video at timestamp",
+      "description": "Captures a single frame from a video at a specific timestamp as a PNG image. -ss is the seek time (HH:MM:SS), -frames:v 1 grabs one frame.",
+      "command": "ffmpeg -i video.mp4 -ss 00:01:30 -frames:v 1 screenshot.png",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "screenshot",
+        "frame",
+        "capture",
+        "thumbnail",
+        "timestamp",
+        "image"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-gif",
+      "title": "Convert video clip to GIF",
+      "description": "Converts a short video clip to an animated GIF. -t 5 takes 5 seconds from the -ss start point. Generates a palette first for better quality GIFs.",
+      "command": "ffmpeg -i input.mp4 -ss 00:00:10 -t 5 -vf \"fps=10,scale=640:-1\" output.gif",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "gif",
+        "animated",
+        "convert",
+        "clip",
+        "video",
+        "animation"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ffmpeg-resize",
+      "title": "Resize video resolution (ffmpeg)",
+      "description": "Scales a video to a new resolution. -1 on the height means 'maintain aspect ratio'. Common targets: 1280:720 (720p), 1920:1080 (1080p), 640:-1 (640px wide).",
+      "command": "ffmpeg -i input.mp4 -vf scale=1280:720 output-720p.mp4",
+      "category": "Media & Video",
+      "keywords": [
+        "ffmpeg",
+        "resize",
+        "scale",
+        "resolution",
+        "720p",
+        "1080p",
+        "video"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ytdlp-install",
+      "title": "Install yt-dlp (video downloader)",
+      "description": "Installs yt-dlp \u2014 the most capable open-source video downloader. Works with YouTube, Vimeo, Twitter/X, Instagram, TikTok, and 1000+ sites. A maintained fork of youtube-dl.",
+      "command": "pip install yt-dlp",
+      "category": "Media & Video",
+      "keywords": [
+        "yt-dlp",
+        "youtube",
+        "download",
+        "install",
+        "video",
+        "pip",
+        "ytdlp"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "med-ytdlp-download",
+      "title": "Download a video with yt-dlp",
+      "description": "Downloads a video in the best available quality. yt-dlp works with YouTube, Vimeo, and 1000+ other sites. The URL is pasted after the command.",
+      "command": "yt-dlp 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'",
+      "category": "Media & Video",
+      "keywords": [
+        "yt-dlp",
+        "youtube",
+        "download",
+        "video",
+        "url",
+        "ytdlp"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ytdlp-audio",
+      "title": "Download audio only (MP3) with yt-dlp",
+      "description": "Downloads only the audio from a video and converts it to MP3. Great for saving music or podcasts. Requires ffmpeg to be installed for the conversion.",
+      "command": "yt-dlp -x --audio-format mp3 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'",
+      "category": "Media & Video",
+      "keywords": [
+        "yt-dlp",
+        "youtube",
+        "audio",
+        "mp3",
+        "download",
+        "music",
+        "podcast"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-ytdlp-playlist",
+      "title": "Download a YouTube playlist",
+      "description": "Downloads all videos in a YouTube playlist. Use --playlist-start and --playlist-end to download a range. '--yes-playlist' confirms playlist download.",
+      "command": "yt-dlp --yes-playlist 'https://www.youtube.com/playlist?list=PLxxxxxx'",
+      "category": "Media & Video",
+      "keywords": [
+        "yt-dlp",
+        "youtube",
+        "playlist",
+        "download",
+        "all",
+        "bulk",
+        "videos"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-imagemagick-install",
+      "title": "Install ImageMagick",
+      "description": "Installs ImageMagick \u2014 the classic command-line image processing suite. Convert formats, resize, crop, add text, apply filters, create thumbnails, and more.",
+      "command": "sudo apt install imagemagick",
+      "category": "Media & Video",
+      "keywords": [
+        "imagemagick",
+        "convert",
+        "image",
+        "install",
+        "magick",
+        "resize",
+        "photo"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "med-imagemagick-convert",
+      "title": "Convert image format (ImageMagick)",
+      "description": "Converts an image from one format to another. ImageMagick supports JPG, PNG, WEBP, BMP, GIF, TIFF, and many more. Just change the extension.",
+      "command": "convert input.png output.jpg",
+      "category": "Media & Video",
+      "keywords": [
+        "imagemagick",
+        "convert",
+        "image",
+        "format",
+        "jpg",
+        "png",
+        "webp"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-imagemagick-resize",
+      "title": "Resize an image (ImageMagick)",
+      "description": "Resizes an image to a specific width, maintaining aspect ratio (the ! forces exact dimensions ignoring ratio). Use 50% for percentage scaling.",
+      "command": "convert input.jpg -resize 800x600 output.jpg",
+      "category": "Media & Video",
+      "keywords": [
+        "imagemagick",
+        "resize",
+        "scale",
+        "image",
+        "width",
+        "height",
+        "convert"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "med-imagemagick-bulk",
+      "title": "Bulk resize all images in a folder",
+      "description": "Resizes all JPG images in a folder and saves them to an 'output' subfolder. The mogrify command works in-place \u2014 use convert in a loop for safer batch processing.",
+      "command": "mkdir -p output && for f in *.jpg; do convert \"$f\" -resize 1920x1080\\> \"output/$f\"; done",
+      "category": "Media & Video",
+      "keywords": [
+        "imagemagick",
+        "bulk",
+        "batch",
+        "resize",
+        "all",
+        "folder",
+        "images",
+        "loop"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-install-tools",
+      "title": "Install PDF command-line tools",
+      "description": "Installs a collection of PDF tools: pdftk (merge/split/rotate), poppler-utils (pdfinfo/pdftotext/pdfimages), ghostscript (compress/convert), and pandoc (document conversion).",
+      "command": "sudo apt install pdftk poppler-utils ghostscript pandoc",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "install",
+        "pdftk",
+        "poppler",
+        "ghostscript",
+        "pandoc",
+        "tools"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "pdf-merge",
+      "title": "Merge multiple PDFs into one",
+      "description": "Combines multiple PDF files into a single PDF in the order specified. pdftk is the most reliable tool for this. Replace input1.pdf input2.pdf with your files.",
+      "command": "pdftk input1.pdf input2.pdf input3.pdf cat output merged.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "merge",
+        "combine",
+        "join",
+        "cat",
+        "pdftk",
+        "multiple"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-split",
+      "title": "Split PDF into individual pages",
+      "description": "Splits each page of a PDF into a separate file. Output files are named page_01.pdf, page_02.pdf, etc.",
+      "command": "pdftk input.pdf burst output page_%02d.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "split",
+        "separate",
+        "pages",
+        "burst",
+        "pdftk",
+        "individual"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-compress",
+      "title": "Compress a PDF with Ghostscript",
+      "description": "Reduces PDF file size using Ghostscript. '/ebook' balances quality and size; options from smallest to biggest: /screen /ebook /printer /prepress. Great for emailing large PDFs.",
+      "command": "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile=compressed.pdf input.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "compress",
+        "reduce",
+        "size",
+        "ghostscript",
+        "gs",
+        "ebook",
+        "smaller"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-to-text",
+      "title": "Extract text from a PDF",
+      "description": "Extracts all text content from a PDF file into a plain text file. Useful for searching PDF content, feeding PDFs to AI, or extracting data.",
+      "command": "pdftotext input.pdf output.txt",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "extract",
+        "text",
+        "pdftotext",
+        "convert",
+        "content",
+        "plain"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-info",
+      "title": "Show PDF metadata and info",
+      "description": "Displays metadata about a PDF: number of pages, creator, creation date, page size, encryption status, etc.",
+      "command": "pdfinfo document.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "info",
+        "metadata",
+        "pages",
+        "size",
+        "pdfinfo",
+        "details"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-rotate",
+      "title": "Rotate PDF pages",
+      "description": "Rotates all pages of a PDF by 90 degrees clockwise. Use '1-endwest' to rotate all pages. Directions: north (180), east (90cw), west (90ccw), south (180).",
+      "command": "pdftk input.pdf rotate 1-endeast output rotated.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pdf",
+        "rotate",
+        "turn",
+        "page",
+        "pdftk",
+        "orientation",
+        "landscape"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-ocr",
+      "title": "Add OCR text layer to scanned PDF",
+      "description": "Installs ocrmypdf and adds an OCR layer to a scanned PDF, making it searchable and copy-pasteable. Supports 100+ languages. One of the most useful PDF tools available.",
+      "command": "sudo apt install ocrmypdf && ocrmypdf input-scanned.pdf output-searchable.pdf",
+      "category": "PDF & Documents",
+      "keywords": [
+        "ocr",
+        "pdf",
+        "searchable",
+        "ocrmypdf",
+        "scan",
+        "text",
+        "layer",
+        "install"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-pandoc-convert",
+      "title": "Convert documents with Pandoc",
+      "description": "Pandoc converts between almost any document format: Markdown, HTML, DOCX, PDF, EPUB, LaTeX, RST, and more. This example converts Markdown to PDF (requires LaTeX) or DOCX.",
+      "command": "pandoc document.md -o output.docx",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pandoc",
+        "convert",
+        "markdown",
+        "docx",
+        "pdf",
+        "epub",
+        "html",
+        "document"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pdf-pandoc-html",
+      "title": "Convert Markdown to HTML (Pandoc)",
+      "description": "Converts a Markdown file to a standalone HTML file with embedded CSS. --standalone adds proper HTML headers. Great for turning README files into web pages.",
+      "command": "pandoc README.md --standalone -o README.html",
+      "category": "PDF & Documents",
+      "keywords": [
+        "pandoc",
+        "markdown",
+        "html",
+        "convert",
+        "standalone",
+        "document"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-samba-install",
+      "title": "Install Samba (share files with Windows)",
+      "description": "Installs Samba \u2014 allows Linux to share folders with Windows computers on the same network using the SMB protocol. Windows will see your shares in File Explorer.",
+      "command": "sudo apt install samba",
+      "category": "File Sharing",
+      "keywords": [
+        "samba",
+        "smb",
+        "install",
+        "windows",
+        "share",
+        "network",
+        "cifs"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-samba-config",
+      "title": "Add a Samba share to config",
+      "description": "Opens the Samba configuration file to add a new share. Add a block at the bottom: [ShareName] path = /path/to/folder browseable = yes writable = yes guest ok = no",
+      "command": "sudo nano /etc/samba/smb.conf",
+      "category": "File Sharing",
+      "keywords": [
+        "samba",
+        "config",
+        "share",
+        "smb",
+        "nano",
+        "add",
+        "folder",
+        "windows"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "share-samba-user",
+      "title": "Add a Samba user",
+      "description": "Creates a Samba password for a user. The user must already exist as a Linux user. This Samba password can be different from the Linux login password.",
+      "command": "sudo smbpasswd -a $USER",
+      "category": "File Sharing",
+      "keywords": [
+        "samba",
+        "user",
+        "password",
+        "add",
+        "smb",
+        "account",
+        "access"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "share-samba-restart",
+      "title": "Restart Samba services",
+      "description": "Restarts the Samba services after making configuration changes. Both smbd (file sharing) and nmbd (name resolution) need to restart.",
+      "command": "sudo systemctl restart smbd nmbd",
+      "category": "File Sharing",
+      "keywords": [
+        "samba",
+        "restart",
+        "smbd",
+        "nmbd",
+        "reload",
+        "service",
+        "systemctl"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-nfs-install",
+      "title": "Install NFS server",
+      "description": "Installs the NFS server for sharing folders between Linux machines. NFS is faster than Samba for Linux-to-Linux file sharing.",
+      "command": "sudo apt install nfs-kernel-server",
+      "category": "File Sharing",
+      "keywords": [
+        "nfs",
+        "install",
+        "server",
+        "share",
+        "linux",
+        "network",
+        "filesystem"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-nfs-export",
+      "title": "Add an NFS export (share a folder)",
+      "description": "Adds a folder to the NFS exports file. 192.168.1.0/24 allows access from your local network. Options: rw (read-write), ro (read-only), sync (safe), async (faster but risky).",
+      "command": "echo '/home/shared 192.168.1.0/24(rw,sync,no_subtree_check)' | sudo tee -a /etc/exports && sudo exportfs -ra",
+      "category": "File Sharing",
+      "keywords": [
+        "nfs",
+        "export",
+        "share",
+        "folder",
+        "add",
+        "network",
+        "rw",
+        "exports"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-nfs-mount",
+      "title": "Mount an NFS share",
+      "description": "Mounts a remote NFS share onto a local directory. Replace server-ip with the server's IP and /remote/path with the exported path.",
+      "command": "sudo mount -t nfs server-ip:/remote/path /mnt/nfs-share",
+      "category": "File Sharing",
+      "keywords": [
+        "nfs",
+        "mount",
+        "remote",
+        "share",
+        "client",
+        "linux",
+        "server"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "share-sshfs-install",
+      "title": "Install SSHFS (mount remote folders)",
+      "description": "Installs SSHFS \u2014 lets you mount a remote folder over SSH as if it were a local directory. No server setup needed if you have SSH access. Great for editing remote files locally.",
+      "command": "sudo apt install sshfs",
+      "category": "File Sharing",
+      "keywords": [
+        "sshfs",
+        "install",
+        "mount",
+        "remote",
+        "ssh",
+        "folder",
+        "filesystem",
+        "fuse"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "share-sshfs-mount",
+      "title": "Mount remote folder with SSHFS",
+      "description": "Mounts a remote directory over SSH onto a local mount point. Once mounted, you can browse and edit files as if they were local. Use fusermount -u ~/remotedir to unmount.",
+      "command": "sshfs user@remote-server:/remote/path ~/remotedir",
+      "category": "File Sharing",
+      "keywords": [
+        "sshfs",
+        "mount",
+        "remote",
+        "ssh",
+        "folder",
+        "local",
+        "fuse",
+        "access"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-iptables-list",
+      "title": "List all iptables rules",
+      "description": "Shows all current iptables firewall rules with line numbers. -n prevents slow DNS lookups. -v shows packet/byte counters. Essential for understanding current firewall state.",
+      "command": "sudo iptables -L -n -v --line-numbers",
+      "category": "Advanced Networking",
+      "keywords": [
+        "iptables",
+        "list",
+        "rules",
+        "firewall",
+        "show",
+        "current",
+        "all"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-iptables-allow-port",
+      "title": "Allow incoming traffic on a port",
+      "description": "Adds an iptables rule to accept incoming TCP traffic on a specific port. Replace 8080 with your port and tcp with udp if needed. Run iptables-save to persist across reboots.",
+      "command": "sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT",
+      "category": "Advanced Networking",
+      "keywords": [
+        "iptables",
+        "allow",
+        "port",
+        "firewall",
+        "accept",
+        "incoming",
+        "tcp",
+        "rule"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-iptables-block-ip",
+      "title": "Block all traffic from an IP address",
+      "description": "Drops all incoming traffic from a specific IP address. Useful for blocking an attacker or a known bad actor. Add multiple rules for multiple IPs.",
+      "command": "sudo iptables -I INPUT -s 1.2.3.4 -j DROP",
+      "category": "Advanced Networking",
+      "keywords": [
+        "iptables",
+        "block",
+        "ip",
+        "drop",
+        "firewall",
+        "ban",
+        "address",
+        "traffic"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-iptables-save",
+      "title": "Save iptables rules (persist reboots)",
+      "description": "Saves current iptables rules so they survive a reboot. Requires the iptables-persistent package. Alternatively use: sudo iptables-save > /etc/iptables/rules.v4",
+      "command": "sudo apt install iptables-persistent && sudo netfilter-persistent save",
+      "category": "Advanced Networking",
+      "keywords": [
+        "iptables",
+        "save",
+        "persist",
+        "reboot",
+        "rules",
+        "persistent",
+        "netfilter"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-ufw-enable",
+      "title": "Enable UFW firewall",
+      "description": "Enables UFW (Uncomplicated Firewall) \u2014 a user-friendly frontend to iptables. UFW is the recommended firewall tool on Ubuntu. Always allow SSH first to avoid locking yourself out.",
+      "command": "sudo ufw allow ssh && sudo ufw enable && sudo ufw status verbose",
+      "category": "Advanced Networking",
+      "keywords": [
+        "ufw",
+        "firewall",
+        "enable",
+        "allow",
+        "ssh",
+        "ubuntu",
+        "simple"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-ufw-allow",
+      "title": "Allow a port through UFW",
+      "description": "Opens a port in the UFW firewall. You can specify a port number, a service name (/etc/services), or a named profile. 'sudo ufw deny 23' to block instead.",
+      "command": "sudo ufw allow 443/tcp",
+      "category": "Advanced Networking",
+      "keywords": [
+        "ufw",
+        "allow",
+        "port",
+        "firewall",
+        "open",
+        "tcp",
+        "udp",
+        "rule"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-bridge-create",
+      "title": "Create a network bridge",
+      "description": "Creates a network bridge \u2014 a virtual switch that connects multiple network interfaces. Used by KVM/VMs and Docker for networking. Replace eth0 with your actual interface name.",
+      "command": "sudo ip link add name br0 type bridge && sudo ip link set eth0 master br0 && sudo ip link set br0 up",
+      "category": "Advanced Networking",
+      "keywords": [
+        "bridge",
+        "network",
+        "create",
+        "interface",
+        "switch",
+        "vm",
+        "kvm",
+        "virtual"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-vlan-create",
+      "title": "Create a VLAN interface",
+      "description": "Creates a VLAN-tagged interface on top of a physical interface. VLAN 10 on eth0 appears as eth0.10. Requires the 8021q kernel module.",
+      "command": "sudo modprobe 8021q && sudo ip link add link eth0 name eth0.10 type vlan id 10 && sudo ip link set eth0.10 up",
+      "category": "Advanced Networking",
+      "keywords": [
+        "vlan",
+        "create",
+        "interface",
+        "tagged",
+        "802.1q",
+        "network",
+        "switch"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-bandwidth-test",
+      "title": "Test network bandwidth with iperf3",
+      "description": "Tests network bandwidth between two machines. On the server: 'iperf3 -s'. On the client: run this command with the server's IP. Shows throughput in Mbps/Gbps.",
+      "command": "iperf3 -c server-ip",
+      "category": "Advanced Networking",
+      "keywords": [
+        "iperf3",
+        "bandwidth",
+        "speed",
+        "test",
+        "network",
+        "throughput",
+        "mbps"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "net-ss-listen",
+      "title": "Show all listening ports (ss)",
+      "description": "Lists all ports the system is currently listening on, with the process name. ss is the modern replacement for netstat. -t=TCP -u=UDP -l=listening -p=process -n=numeric.",
+      "command": "sudo ss -tulpn",
+      "category": "Advanced Networking",
+      "keywords": [
+        "ss",
+        "netstat",
+        "listening",
+        "ports",
+        "process",
+        "network",
+        "connections",
+        "tcp",
+        "udp"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "net-tcpdump-capture",
+      "title": "Capture network packets with tcpdump",
+      "description": "Captures network packets on an interface and saves to a .pcap file for analysis in Wireshark. -i any captures all interfaces. -c 100 stops after 100 packets. Press Ctrl+C to stop.",
+      "command": "sudo tcpdump -i any -c 100 -w capture.pcap",
+      "category": "Advanced Networking",
+      "keywords": [
+        "tcpdump",
+        "capture",
+        "packet",
+        "pcap",
+        "wireshark",
+        "network",
+        "traffic",
+        "analyse"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-awk-print-col",
+      "title": "Print specific columns with awk",
+      "description": "awk splits each line into fields (by whitespace or a delimiter). $1 is first field, $2 second, etc. -F sets the delimiter. This prints the username and shell from /etc/passwd.",
+      "command": "awk -F: '{print $1, $7}' /etc/passwd",
+      "category": "Text Processing",
+      "keywords": [
+        "awk",
+        "print",
+        "column",
+        "field",
+        "delimiter",
+        "parse",
+        "extract",
+        "text"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "txt-awk-filter",
+      "title": "Filter lines matching a pattern (awk)",
+      "description": "awk can both filter and transform. /pattern/ matches lines containing that pattern. This prints only lines where the 3rd field is greater than 1000.",
+      "command": "awk -F: '$3 > 1000 {print $1, $3}' /etc/passwd",
+      "category": "Text Processing",
+      "keywords": [
+        "awk",
+        "filter",
+        "match",
+        "pattern",
+        "condition",
+        "lines",
+        "field",
+        "text"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "txt-awk-sum",
+      "title": "Sum a column of numbers (awk)",
+      "description": "Adds up all values in the first column of a file. BEGIN runs before processing, END runs after. This pattern works for any simple column sum.",
+      "command": "awk '{sum += $1} END {print \"Total:\", sum}' numbers.txt",
+      "category": "Text Processing",
+      "keywords": [
+        "awk",
+        "sum",
+        "total",
+        "column",
+        "numbers",
+        "calculate",
+        "aggregate",
+        "text"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-sed-replace",
+      "title": "Replace text in a file (sed)",
+      "description": "Replaces all occurrences of a pattern in a file. -i edits the file in-place. /g means replace all occurrences per line (not just the first). Without -i, output goes to stdout.",
+      "command": "sed -i 's/old-text/new-text/g' file.txt",
+      "category": "Text Processing",
+      "keywords": [
+        "sed",
+        "replace",
+        "substitute",
+        "text",
+        "file",
+        "inplace",
+        "edit",
+        "pattern"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-sed-delete-lines",
+      "title": "Delete lines matching a pattern (sed)",
+      "description": "Deletes all lines containing a pattern from a file. d means delete. Combine with -n and p to instead print only matching lines (like grep).",
+      "command": "sed -i '/pattern-to-delete/d' file.txt",
+      "category": "Text Processing",
+      "keywords": [
+        "sed",
+        "delete",
+        "remove",
+        "lines",
+        "pattern",
+        "file",
+        "filter",
+        "text"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-sed-extract-range",
+      "title": "Extract a range of lines (sed)",
+      "description": "Prints lines 10 through 20 from a file without loading the whole file. -n suppresses default printing, p prints the matched range. Faster than head/tail for specific ranges.",
+      "command": "sed -n '10,20p' file.txt",
+      "category": "Text Processing",
+      "keywords": [
+        "sed",
+        "extract",
+        "range",
+        "lines",
+        "print",
+        "specific",
+        "file",
+        "slice"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-xargs-run",
+      "title": "Run command on each input line (xargs)",
+      "description": "xargs takes lines from stdin and passes them as arguments to a command. -I{} lets you place the input anywhere in the command. Here: delete each file listed in files.txt.",
+      "command": "cat files.txt | xargs -I{} rm '{}'",
+      "category": "Text Processing",
+      "keywords": [
+        "xargs",
+        "run",
+        "each",
+        "line",
+        "stdin",
+        "arguments",
+        "pipe",
+        "loop"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-xargs-parallel",
+      "title": "Run commands in parallel (xargs)",
+      "description": "Runs commands in parallel using xargs. -P 4 runs 4 processes at once. Great for speeding up operations on many files.",
+      "command": "cat urls.txt | xargs -P 4 -I{} wget '{}'",
+      "category": "Text Processing",
+      "keywords": [
+        "xargs",
+        "parallel",
+        "concurrent",
+        "process",
+        "fast",
+        "batch",
+        "run",
+        "multiple"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-sort-unique",
+      "title": "Sort and deduplicate a file",
+      "description": "Sorts a file alphabetically and removes duplicate lines. sort | uniq is the classic combo. 'sort -u' is the shortcut. Add 'sort -rn' for reverse numerical sort.",
+      "command": "sort file.txt | uniq",
+      "category": "Text Processing",
+      "keywords": [
+        "sort",
+        "unique",
+        "uniq",
+        "deduplicate",
+        "remove",
+        "duplicates",
+        "lines",
+        "text"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-sort-count",
+      "title": "Count and rank occurrences",
+      "description": "Counts how many times each unique line appears and sorts by frequency. Classic log analysis pipeline: uniq -c counts, sort -rn sorts numerically in reverse (most common first).",
+      "command": "sort file.txt | uniq -c | sort -rn",
+      "category": "Text Processing",
+      "keywords": [
+        "sort",
+        "uniq",
+        "count",
+        "frequency",
+        "rank",
+        "occurrences",
+        "log",
+        "analysis"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-cut-fields",
+      "title": "Extract fields from delimited text (cut)",
+      "description": "Extracts specific fields from delimited text. -d sets the delimiter, -f specifies field numbers. This extracts the first and third comma-separated fields.",
+      "command": "cut -d',' -f1,3 data.csv",
+      "category": "Text Processing",
+      "keywords": [
+        "cut",
+        "field",
+        "csv",
+        "delimiter",
+        "extract",
+        "column",
+        "text",
+        "parse"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "txt-tr-replace",
+      "title": "Translate or delete characters (tr)",
+      "description": "Replaces or deletes specific characters in a stream. This converts all lowercase to uppercase. Use tr -d '\\n' to remove newlines, or tr -s ' ' to squeeze repeated spaces.",
+      "command": "echo 'hello world' | tr 'a-z' 'A-Z'",
+      "category": "Text Processing",
+      "keywords": [
+        "tr",
+        "translate",
+        "replace",
+        "character",
+        "uppercase",
+        "lowercase",
+        "delete"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "txt-paste-columns",
+      "title": "Join files side by side (paste)",
+      "description": "Pastes two files side by side as columns, separated by a tab. Useful for combining data from separate files into a single table. -d',' changes the delimiter to a comma.",
+      "command": "paste file1.txt file2.txt",
+      "category": "Text Processing",
+      "keywords": [
+        "paste",
+        "join",
+        "columns",
+        "side",
+        "files",
+        "combine",
+        "table",
+        "text"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "hw-sensors-install",
+      "title": "Install lm-sensors (hardware temperatures)",
+      "description": "Installs lm-sensors for reading CPU, GPU, motherboard temperatures and fan speeds. Run 'sudo sensors-detect' once after installing to detect sensors.",
+      "command": "sudo apt install lm-sensors && sudo sensors-detect --auto",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "sensors",
+        "temperature",
+        "cpu",
+        "gpu",
+        "fan",
+        "lm-sensors",
+        "install",
+        "hardware"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "hw-sensors-read",
+      "title": "Read hardware temperatures and fan speeds",
+      "description": "Displays current CPU/GPU temperatures, fan speeds, and voltage readings from all detected hardware sensors.",
+      "command": "sensors",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "sensors",
+        "temperature",
+        "cpu",
+        "fan",
+        "speed",
+        "voltage",
+        "hardware",
+        "heat"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-gpu-nvidia",
+      "title": "Show NVIDIA GPU status",
+      "description": "Displays NVIDIA GPU temperature, VRAM usage, GPU utilisation percentage, and running processes. Requires nvidia-driver to be installed. Like htop but for your GPU.",
+      "command": "nvidia-smi",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "nvidia",
+        "gpu",
+        "temperature",
+        "vram",
+        "utilisation",
+        "nvidia-smi",
+        "status",
+        "cuda"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-gpu-amd",
+      "title": "Show AMD GPU information",
+      "description": "Displays AMD GPU status \u2014 temperature, usage, VRAM, fan speed. radeontop provides real-time AMD GPU monitoring.",
+      "command": "sudo apt install radeontop && radeontop",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "amd",
+        "gpu",
+        "temperature",
+        "radeontop",
+        "radeon",
+        "monitor",
+        "vram",
+        "usage"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "hw-hdparm-test",
+      "title": "Test hard drive speed (hdparm)",
+      "description": "Measures the read speed of a disk using hdparm. -t tests buffered reads. Replace /dev/sda with your drive. Good baseline: HDD ~100-200 MB/s, SSD 300-600, NVMe 1000-7000 MB/s.",
+      "command": "sudo hdparm -tT /dev/sda",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "hdparm",
+        "speed",
+        "test",
+        "disk",
+        "hdd",
+        "ssd",
+        "read",
+        "benchmark",
+        "performance"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "hw-cpu-info",
+      "title": "Show detailed CPU information",
+      "description": "Displays CPU model, core count, thread count, cache sizes, and supported instruction sets. 'lscpu' is the most readable way to see your CPU specs.",
+      "command": "lscpu",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "cpu",
+        "info",
+        "lscpu",
+        "model",
+        "cores",
+        "threads",
+        "cache",
+        "processor",
+        "specs"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-ram-info",
+      "title": "Show RAM slots and module info",
+      "description": "Displays detailed information about installed RAM: slot locations, capacity, speed, and type (DDR4/DDR5). Useful for knowing what RAM you have and what slots are free.",
+      "command": "sudo dmidecode --type memory | grep -E 'Size|Speed|Type|Manufacturer|Part'",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "ram",
+        "memory",
+        "dmidecode",
+        "ddr4",
+        "speed",
+        "slots",
+        "hardware",
+        "info"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "hw-pci-list",
+      "title": "List all PCI devices",
+      "description": "Lists all PCI devices including GPU, network cards, sound cards, and controllers. Use lspci -v for verbose details, or lspci -k to see which kernel driver is loaded.",
+      "command": "lspci",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "lspci",
+        "pci",
+        "devices",
+        "gpu",
+        "hardware",
+        "list",
+        "drivers",
+        "cards"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-usb-list",
+      "title": "List all USB devices",
+      "description": "Lists all connected USB devices in a tree layout. Shows device name, manufacturer, and USB version. Useful for identifying connected hardware.",
+      "command": "lsusb -t",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "lsusb",
+        "usb",
+        "devices",
+        "list",
+        "connected",
+        "hardware",
+        "tree"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-battery-status",
+      "title": "Show laptop battery status",
+      "description": "Shows detailed battery information: charge level, capacity, charge rate, and health. The path may vary \u2014 try ls /sys/class/power_supply/ to find the right name.",
+      "command": "cat /sys/class/power_supply/BAT0/uevent",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "battery",
+        "laptop",
+        "status",
+        "charge",
+        "level",
+        "health",
+        "power"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "hw-disk-health",
+      "title": "Check disk SMART health status",
+      "description": "Reads SMART (Self-Monitoring, Analysis and Reporting Technology) data from a disk to check its health. Warns if the disk is showing signs of failure. Replace /dev/sda with your drive.",
+      "command": "sudo smartctl -H /dev/sda",
+      "category": "Hardware & Sensors",
+      "keywords": [
+        "smart",
+        "disk",
+        "health",
+        "smartctl",
+        "failure",
+        "ssd",
+        "hdd",
+        "status"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "log-journalctl-boot",
+      "title": "Show logs from current boot",
+      "description": "Shows all system log messages from the current boot session. journalctl is the primary way to read logs on systemd systems. Use -p err to show only errors.",
+      "command": "journalctl -b",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "logs",
+        "boot",
+        "current",
+        "system",
+        "messages",
+        "journal"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "log-journalctl-follow",
+      "title": "Follow logs in real time",
+      "description": "Streams system logs in real time \u2014 like 'tail -f' but for the entire system journal. Great for watching what happens when you trigger an event.",
+      "command": "journalctl -f",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "follow",
+        "realtime",
+        "tail",
+        "logs",
+        "stream",
+        "watch",
+        "journal"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "log-journalctl-service",
+      "title": "Show logs for a specific service",
+      "description": "Shows log output from a specific systemd service. Add -f to follow in real time, or -n 50 to show only the last 50 lines. Replace nginx with any service name.",
+      "command": "journalctl -u nginx -n 100 --no-pager",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "service",
+        "unit",
+        "logs",
+        "nginx",
+        "systemd",
+        "specific",
+        "journal"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "log-journalctl-errors",
+      "title": "Show only error-level system logs",
+      "description": "Filters journal to show only errors and critical messages (priority 0-3). Great for a quick health check on a server to see if anything is going wrong.",
+      "command": "journalctl -p err -b",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "error",
+        "critical",
+        "priority",
+        "filter",
+        "logs",
+        "problems",
+        "journal"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "log-journalctl-time",
+      "title": "Show logs between two timestamps",
+      "description": "Shows logs within a specific time range. Times can be absolute (2024-01-01 12:00:00) or relative (--since '1 hour ago'). Very useful for incident investigation.",
+      "command": "journalctl --since '2024-01-01 10:00:00' --until '2024-01-01 11:00:00'",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "time",
+        "range",
+        "since",
+        "until",
+        "timestamp",
+        "logs",
+        "incident"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "log-journalctl-disk",
+      "title": "Check journal disk usage",
+      "description": "Shows how much disk space the journal is using and the configured limits. Use 'sudo journalctl --vacuum-size=500M' to reduce journal size to 500 MB.",
+      "command": "journalctl --disk-usage",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "journalctl",
+        "disk",
+        "usage",
+        "size",
+        "vacuum",
+        "space",
+        "journal",
+        "cleanup"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "log-logrotate",
+      "title": "Manually run logrotate",
+      "description": "Forces logrotate to run immediately, rotating and compressing log files. Normally runs via cron. -v shows verbose output. Useful for testing logrotate configs.",
+      "command": "sudo logrotate -v /etc/logrotate.conf",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "logrotate",
+        "rotate",
+        "logs",
+        "compress",
+        "manual",
+        "run",
+        "verbose",
+        "cron"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "log-auth-failures",
+      "title": "Show recent authentication failures",
+      "description": "Shows recent failed SSH login attempts and sudo failures from the auth log. Essential for spotting brute force attacks. Also check: journalctl -u sshd | grep Failed",
+      "command": "sudo grep 'Failed\\|Invalid' /var/log/auth.log | tail -20",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "auth",
+        "login",
+        "failed",
+        "ssh",
+        "brute",
+        "force",
+        "security",
+        "log",
+        "attack"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "log-dmesg",
+      "title": "Show kernel ring buffer messages (dmesg)",
+      "description": "Shows messages from the kernel ring buffer \u2014 hardware events, driver messages, boot messages, USB connections. dmesg -w follows new messages in real time. dmesg -T shows human-readable timestamps.",
+      "command": "dmesg -T | tail -30",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "dmesg",
+        "kernel",
+        "hardware",
+        "driver",
+        "usb",
+        "messages",
+        "boot",
+        "log",
+        "ring"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "log-watch-install",
+      "title": "Install logwatch (automated log analysis)",
+      "description": "Installs logwatch, which sends a daily email digest summarising important log events. Useful on servers to get a daily overview of what's happening.",
+      "command": "sudo apt install logwatch && sudo logwatch --output stdout --range today",
+      "category": "Logs & Monitoring",
+      "keywords": [
+        "logwatch",
+        "install",
+        "daily",
+        "email",
+        "summary",
+        "log",
+        "analysis",
+        "report"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-flatpak-install",
+      "title": "Install Flatpak support",
+      "description": "Installs Flatpak and adds the Flathub repository \u2014 the largest source of Flatpak apps. Flatpak apps run in a sandbox and work on any Linux distro.",
+      "command": "sudo apt install flatpak && flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "flatpak",
+        "install",
+        "flathub",
+        "setup",
+        "sandbox",
+        "universal"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-flatpak-search",
+      "title": "Search for a Flatpak app",
+      "description": "Searches Flathub for apps matching a name. Shows the app ID needed to install it.",
+      "command": "flatpak search firefox",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "flatpak",
+        "search",
+        "find",
+        "app",
+        "flathub",
+        "browser"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-flatpak-install-app",
+      "title": "Install a Flatpak app from Flathub",
+      "description": "Installs an app from Flathub. The full app ID (e.g. org.mozilla.firefox) is used to identify apps. Find IDs with 'flatpak search' or on flathub.org.",
+      "command": "flatpak install flathub org.mozilla.firefox",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "flatpak",
+        "install",
+        "app",
+        "flathub",
+        "firefox",
+        "application"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-flatpak-update",
+      "title": "Update all Flatpak apps",
+      "description": "Updates all installed Flatpak applications to their latest versions. Flatpak apps update independently from system packages.",
+      "command": "flatpak update",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "flatpak",
+        "update",
+        "upgrade",
+        "apps",
+        "all",
+        "flathub"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "pkg-flatpak-list",
+      "title": "List installed Flatpak apps",
+      "description": "Lists all installed Flatpak applications with their names, app IDs, and versions.",
+      "command": "flatpak list --app",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "flatpak",
+        "list",
+        "installed",
+        "apps",
+        "show",
+        "flatpak"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "pkg-snap-install",
+      "title": "Install a snap package",
+      "description": "Installs an app from the Snap Store. Snaps are self-contained packages that work on any Linux distro with snapd installed. --classic allows full system access for developer tools.",
+      "command": "sudo snap install code --classic",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "snap",
+        "install",
+        "snap",
+        "package",
+        "store",
+        "vscode",
+        "code"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-snap-list",
+      "title": "List installed snap packages",
+      "description": "Lists all installed snap packages with their versions and channels.",
+      "command": "snap list",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "snap",
+        "list",
+        "installed",
+        "packages",
+        "show",
+        "snapd"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "pkg-snap-update",
+      "title": "Update all snap packages",
+      "description": "Updates all installed snap packages to their latest versions. Snaps auto-update in the background, but this forces an immediate update.",
+      "command": "sudo snap refresh",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "snap",
+        "update",
+        "refresh",
+        "upgrade",
+        "all",
+        "packages"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-appimage-run",
+      "title": "Make an AppImage executable and run it",
+      "description": "Makes an AppImage file executable and runs it. AppImages are portable apps that run without installation. Always check the source before running downloaded AppImages.",
+      "command": "chmod +x MyApp.AppImage && ./MyApp.AppImage",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "appimage",
+        "chmod",
+        "run",
+        "execute",
+        "portable",
+        "app",
+        "linux"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-appimage-integrate",
+      "title": "Integrate AppImage into app menu",
+      "description": "Installs appimaged \u2014 a daemon that automatically adds AppImages in ~/Applications to your app launcher when you place them there. Makes AppImages work like installed apps.",
+      "command": "sudo apt install appimaged",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "appimage",
+        "integrate",
+        "menu",
+        "launcher",
+        "install",
+        "appimaged",
+        "desktop"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-wine-install",
+      "title": "Install Wine (run Windows apps)",
+      "description": "Installs Wine \u2014 lets you run Windows .exe programs on Linux. winehq-stable is the most compatible version for everyday Windows apps and many games.",
+      "command": "sudo dpkg --add-architecture i386 && sudo apt update && sudo apt install wine wine32 wine64",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "wine",
+        "windows",
+        "exe",
+        "install",
+        "run",
+        "app",
+        "compatibility",
+        "win32"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "pkg-wine-run",
+      "title": "Run a Windows .exe with Wine",
+      "description": "Launches a Windows executable with Wine. Wine creates a 'wineprefix' (virtual C: drive) at ~/.wine the first time. Many Windows apps and games run without any tweaks.",
+      "command": "wine program.exe",
+      "category": "Flatpak, Snap & AppImage",
+      "keywords": [
+        "wine",
+        "run",
+        "exe",
+        "windows",
+        "program",
+        "app",
+        "execute"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-install",
+      "title": "Install jq (JSON processor)",
+      "description": "Installs jq \u2014 the essential command-line tool for working with JSON. Slice, filter, map, and transform JSON data. Found on almost every production server.",
+      "command": "sudo apt install jq",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "install",
+        "process",
+        "filter",
+        "parse",
+        "command"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "jq-pretty-print",
+      "title": "Pretty-print JSON with jq",
+      "description": "Formats and colourises JSON for readability. The '.' filter is identity \u2014 passes everything through but with pretty formatting. Pipe any JSON output into jq for instant readability.",
+      "command": "cat data.json | jq '.'",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "pretty",
+        "print",
+        "format",
+        "colour",
+        "readable",
+        "output"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-extract-field",
+      "title": "Extract a JSON field with jq",
+      "description": "Extracts a specific field from JSON. .name gets the 'name' key. .items[0] gets the first item of an array. .user.email navigates nested objects.",
+      "command": "curl -s https://api.github.com/users/sebamuhr | jq '.name, .public_repos'",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "extract",
+        "field",
+        "key",
+        "value",
+        "parse",
+        "api"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "jq-filter-array",
+      "title": "Filter a JSON array with jq",
+      "description": "Selects items from a JSON array that match a condition. .[] iterates the array, select() filters items, and the result is an array of matching items.",
+      "command": "cat data.json | jq '[.[] | select(.active == true)]'",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "filter",
+        "array",
+        "select",
+        "condition",
+        "map"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-transform",
+      "title": "Transform JSON structure with jq",
+      "description": "Reshapes JSON by constructing a new object from selected fields. Very useful for extracting only the fields you need from a complex API response.",
+      "command": "cat data.json | jq '.[] | {name: .name, email: .contact.email}'",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "transform",
+        "reshape",
+        "structure",
+        "extract",
+        "api",
+        "map"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-to-csv",
+      "title": "Convert JSON array to CSV (jq)",
+      "description": "Converts a JSON array of objects to CSV format. @csv formats an array as a CSV line. Replace the field list with your actual field names.",
+      "command": "cat data.json | jq -r '.[] | [.name, .age, .city] | @csv'",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "jq",
+        "json",
+        "csv",
+        "convert",
+        "export",
+        "table",
+        "pipe",
+        "data"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-yq-install",
+      "title": "Install yq (YAML processor)",
+      "description": "Installs yq \u2014 like jq but for YAML files. Also handles JSON, TOML, and XML. Essential for working with Kubernetes manifests, Docker Compose files, and Ansible playbooks.",
+      "command": "sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "yq",
+        "yaml",
+        "install",
+        "process",
+        "filter",
+        "kubernetes",
+        "compose",
+        "ansible"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-yq-read",
+      "title": "Read a YAML field with yq",
+      "description": "Reads a specific field from a YAML file using yq. Uses the same dot notation as jq. Great for scripting with Kubernetes manifests or any YAML config file.",
+      "command": "yq '.metadata.name' deployment.yaml",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "yq",
+        "yaml",
+        "read",
+        "field",
+        "value",
+        "kubernetes",
+        "manifest",
+        "parse"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-yq-edit",
+      "title": "Edit a YAML value in-place with yq",
+      "description": "Modifies a field in a YAML file in-place without corrupting formatting. -i modifies the file directly. Useful for scripting configuration changes.",
+      "command": "yq -i '.spec.replicas = 3' deployment.yaml",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "yq",
+        "yaml",
+        "edit",
+        "modify",
+        "inplace",
+        "field",
+        "value",
+        "kubernetes"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-csvkit-install",
+      "title": "Install csvkit (CSV tools)",
+      "description": "Installs csvkit \u2014 a collection of tools for working with CSV files in the terminal. Includes csvstat (statistics), csvcut (columns), csvgrep (filter), csvsql (SQL queries on CSV), and csvjson.",
+      "command": "pip install csvkit",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "csvkit",
+        "csv",
+        "install",
+        "tools",
+        "statistics",
+        "filter",
+        "sql",
+        "data"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "jq-csvstat",
+      "title": "Show CSV file statistics",
+      "description": "Displays statistics for each column in a CSV file: min, max, mean, median, most common values. Great for getting a quick overview of any dataset.",
+      "command": "csvstat data.csv",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "csvkit",
+        "csvstat",
+        "csv",
+        "statistics",
+        "column",
+        "mean",
+        "median",
+        "data",
+        "analysis"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "jq-csvsql",
+      "title": "Run SQL query on a CSV file",
+      "description": "Runs SQL queries directly on CSV files as if they were database tables \u2014 no database needed. Supports SELECT, WHERE, GROUP BY, JOIN (between multiple CSV files), etc.",
+      "command": "csvsql --query 'SELECT name, age FROM data WHERE age > 30 ORDER BY age' data.csv",
+      "category": "jq & Data Tools",
+      "keywords": [
+        "csvkit",
+        "csvsql",
+        "csv",
+        "sql",
+        "query",
+        "select",
+        "filter",
+        "database",
+        "data"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-stash",
+      "title": "Stash uncommitted changes",
+      "description": "Saves your current working changes to a temporary stash without committing, so you can switch branches or pull without conflicts. 'git stash pop' restores them.",
+      "command": "git stash push -m \"description of what I was doing\"",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "stash",
+        "save",
+        "uncommitted",
+        "changes",
+        "temporary",
+        "branch",
+        "switch"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-stash-pop",
+      "title": "Restore stashed changes",
+      "description": "Applies the most recent stash back to your working directory. 'git stash list' shows all stashes. 'git stash apply stash@{1}' applies a specific one.",
+      "command": "git stash pop",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "stash",
+        "pop",
+        "restore",
+        "apply",
+        "changes",
+        "retrieve"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "git-adv-cherry-pick",
+      "title": "Cherry-pick a commit from another branch",
+      "description": "Applies a specific commit from any branch onto the current branch. Replace the hash with the commit hash you want (from git log). Useful for backporting fixes.",
+      "command": "git cherry-pick abc1234",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "cherry-pick",
+        "commit",
+        "apply",
+        "backport",
+        "specific",
+        "hash",
+        "branch"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-rebase-i",
+      "title": "Interactive rebase (squash, reorder commits)",
+      "description": "Opens an interactive editor to squash, reorder, rename, or drop commits. HEAD~5 means the last 5 commits. Change 'pick' to 'squash' to combine with the previous commit.",
+      "command": "git rebase -i HEAD~5",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "rebase",
+        "interactive",
+        "squash",
+        "clean",
+        "history",
+        "commits",
+        "reorder"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-bisect",
+      "title": "Find the commit that introduced a bug (bisect)",
+      "description": "Uses binary search through commit history to find the exact commit that introduced a bug. You mark commits as good or bad \u2014 git bisect narrows it down logarithmically.",
+      "command": "git bisect start && git bisect bad HEAD && git bisect good v1.0.0",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "bisect",
+        "bug",
+        "find",
+        "commit",
+        "binary",
+        "search",
+        "regression",
+        "history"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-log-graph",
+      "title": "Show git history as a graph",
+      "description": "Displays git history as a colorised ASCII graph with branch visualization. --oneline shows one commit per line, --decorate shows branch/tag names. Great for understanding branch structure.",
+      "command": "git log --oneline --graph --decorate --all",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "log",
+        "graph",
+        "history",
+        "branches",
+        "visualise",
+        "tree",
+        "oneline"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "git-adv-blame",
+      "title": "See who last modified each line (blame)",
+      "description": "Shows the author and commit for each line in a file. Useful for understanding why a line exists and who to ask about it. -L 10,20 limits to lines 10-20.",
+      "command": "git blame -L 10,20 filename.py",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "blame",
+        "author",
+        "line",
+        "history",
+        "who",
+        "modified",
+        "commit"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-reflog",
+      "title": "View git reflog (undo mistakes)",
+      "description": "Shows a history of where HEAD has been \u2014 including commits that were 'deleted' by reset or rebase. Essential for recovering lost commits. Use 'git checkout <hash>' to rescue them.",
+      "command": "git reflog",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "reflog",
+        "recover",
+        "lost",
+        "commits",
+        "undo",
+        "reset",
+        "history",
+        "rescue"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "git-adv-worktree",
+      "title": "Create a git worktree (work on two branches)",
+      "description": "Creates a second working directory for the same repo at a different branch. Work on two branches simultaneously without stashing or committing. 'git worktree list' shows all.",
+      "command": "git worktree add ../feature-branch feature/my-feature",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "worktree",
+        "branch",
+        "parallel",
+        "multiple",
+        "directory",
+        "work",
+        "simultaneous"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-hooks",
+      "title": "Create a pre-commit hook",
+      "description": "Creates a pre-commit hook script that runs before every commit. Exit with non-zero to reject the commit. Use this to run tests, linting, or other checks automatically.",
+      "command": "cat > .git/hooks/pre-commit << 'EOF'\n#!/bin/bash\nnpm test\nEOF\nchmod +x .git/hooks/pre-commit",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "hook",
+        "pre-commit",
+        "automation",
+        "test",
+        "lint",
+        "script",
+        "check"
+      ],
+      "can_run": false
+    },
+    {
+      "id": "git-adv-submodule",
+      "title": "Add a git submodule",
+      "description": "Adds another git repository as a subdirectory within your repo. Common for including shared libraries or dependencies. 'git submodule update --init --recursive' initialises cloned repos.",
+      "command": "git submodule add https://github.com/user/repo libs/repo",
+      "category": "Git Advanced",
+      "keywords": [
+        "git",
+        "submodule",
+        "add",
+        "dependency",
+        "nested",
+        "repository",
+        "include"
+      ],
+      "can_run": false
     }
   ]
 }
