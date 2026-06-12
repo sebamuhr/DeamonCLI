@@ -163,8 +163,23 @@ def search_commands(query: str, commands: list) -> list:
 
 # ── History ───────────────────────────────────────────────────────────────────
 
+def _has_columns(con, table, needed):
+    """True if `table` exists and contains every column in `needed`."""
+    try:
+        cols = {r[1] for r in con.execute(f"PRAGMA table_info({table})").fetchall()}
+    except sqlite3.Error:
+        return False
+    return cols and needed.issubset(cols)
+
 def init_history():
     con = sqlite3.connect(HIST_PATH)
+    # Migrate any stale schema from older versions: if the table exists but is
+    # missing the columns this version expects, drop and recreate it. (History
+    # is non-critical convenience data, so a clean rebuild is fine.)
+    if not _has_columns(con, "history", {"title", "command", "category", "action", "ran_at"}):
+        con.execute("DROP TABLE IF EXISTS history")
+    if not _has_columns(con, "search_history", {"query", "ran_at"}):
+        con.execute("DROP TABLE IF EXISTS search_history")
     con.execute("""CREATE TABLE IF NOT EXISTS history (
         id      INTEGER PRIMARY KEY AUTOINCREMENT,
         title   TEXT,
