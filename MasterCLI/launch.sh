@@ -10,7 +10,7 @@ except: pass
 " 2>/dev/null)
 
 if [ -n "$GEOMETRY" ]; then
-    gnome-terminal --geometry="$GEOMETRY" --title="DeamonCLI" -- bash -c "cd /home/sebastian/Documents/APPS/MasterCLI && python3 linux_ref.py"
+    gnome-terminal --class=DeamonCLI --geometry="$GEOMETRY" --title="DeamonCLI" -- bash -c "cd /home/sebastian/Documents/APPS/MasterCLI && python3 linux_ref.py"
 else
-    gnome-terminal --maximize --title="DeamonCLI" -- bash -c "cd /home/sebastian/Documents/APPS/MasterCLI && python3 linux_ref.py"
+    gnome-terminal --class=DeamonCLI --maximize --title="DeamonCLI" -- bash -c "cd /home/sebastian/Documents/APPS/MasterCLI && python3 linux_ref.py"
 fi

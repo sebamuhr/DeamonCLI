@@ -7,6 +7,7 @@ from pathlib import Path
 
 try:
     from textual.app import App, ComposeResult
+    from textual.widget import Widget
     from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
     from textual.widgets import (
         Header, Footer, ListView, ListItem, Label,
