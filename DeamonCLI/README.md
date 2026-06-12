@@ -11,10 +11,11 @@ Stop googling the same commands over and over. DeamonCLI lives in your system tr
 ## What it does
 
 - **Search by intent** — type *"make sound louder"*, *"scan my network"*, or *"connect to server"* and it finds the right command
-- **172 commands** across 12 categories: Sound, WiFi, Files, SSH, Git, Security, Bluetooth, USB, Processes, and more
+- **287 commands** across 24 categories: Sound, WiFi, Files, SSH, Git, Security, Bluetooth, USB, Processes, and more
 - **Built-in terminal** — run commands directly inside the app and keep working without switching windows
 - **System tray icon** — lives near your wifi/bluetooth icons; click to open or quit
-- **Remembers your layout** — window size, panel positions, and divider sizes are saved between sessions
+- **Runs in the background** — closing the window (X) keeps the app alive via tmux; click the tray icon to bring it back
+- **Remembers your layout** — window size and panel positions are saved between sessions
 - **Command history** — see everything you've run or copied, with timestamps
 
 ---
@@ -30,16 +31,18 @@ Stop googling the same commands over and over. DeamonCLI lives in your system tr
 
 ```bash
 git clone https://github.com/sebamuhr/DeamonCLI.git
-cd DeamonCLI/MasterCLI
+cd DeamonCLI
 bash install.sh
 ```
 
 The installer will:
 1. Install Python packages (`textual`, `pyperclip`)
-2. Install the AppIndicator library (for the tray icon)
-3. Copy files to `~/.local/share/deamoncli/`
-4. Create a desktop shortcut and app menu entry
-5. Set the tray icon to start automatically on login
+2. Install system packages: `tmux`, `wmctrl`, `xclip`, `gnome-terminal`, AppIndicator
+3. Copy app files to `~/.local/share/deamoncli/`
+4. Create a launcher at `~/.local/bin/deamoncli`
+5. Create a desktop shortcut and app menu entry
+6. Set the tray icon to start automatically on login
+7. Start the tray icon immediately
 
 To uninstall: `bash install.sh --uninstall`
 
@@ -51,6 +54,12 @@ To uninstall: `bash install.sh --uninstall`
 - Click the **daemon face icon** in the system tray (near wifi/bluetooth)
 - Or double-click the desktop shortcut
 - Or search "DeamonCLI" in your apps menu
+- Or run `deamoncli` in a terminal
+
+### Closing and reopening
+- **X button** — hides the window, keeps the app running in the background via tmux
+- **Tray icon → Open DeamonCLI** — brings the window back (re-attaches to the running session)
+- **Tray icon → Quit** — fully closes everything, including any background jobs
 
 ### Searching
 Type anything in the search box — plain English works fine:
@@ -81,12 +90,8 @@ The bottom panel is a real terminal session. You can:
 - Chain commands, pipe output, do your work without leaving the app
 
 ### Resizing panels
-- Drag the **vertical bar** between the search panel and detail panel to resize them
-- Drag the **horizontal bar** between the command detail and terminal to resize them
-- Sizes are saved automatically
-
-### Quitting
-Click the tray icon → **Quit**. This is the only way to fully close the app. Closing the window with X keeps the tray icon running so you can reopen it.
+- Drag the **vertical bar** between the search panel and detail panel to resize
+- Size is saved automatically and restored on next launch
 
 ---
 
@@ -106,26 +111,40 @@ Click the tray icon → **Quit**. This is the only way to fully close the app. C
 | USB & Hardware | list devices, temperatures, battery |
 | Users & Security | accounts, passwords, groups |
 | Text & Files | grep, sed, head, tail, sort |
+| Package Management | apt, snap, flatpak, dpkg |
+| Disk & Storage | df, du, mount, partitions, SMART |
+| Containers & VMs | Docker, Podman, VirtualBox |
+| Systemd & Services | start/stop services, journalctl, timers |
+| Networking Tools | ping, traceroute, netstat, nmap, DNS |
+| Cryptography | GPG, openssl, hashing, certificates |
+| Forensics & Incident Response | log analysis, file integrity, volatility |
+| Web & API | curl, wget, HTTP headers, APIs |
+| Scripting & Automation | cron, bash, variables, loops |
+| Monitoring & Performance | htop, iotop, vmstat, perf |
+| Database CLI | SQLite, MySQL, PostgreSQL |
+| Cloud & DevOps | AWS CLI, gcloud, kubectl, Terraform |
 
 ---
 
 ## Tech stack
 
 - **[Textual](https://textual.textualize.io/)** — Python TUI framework
+- **tmux** — keeps the app running when the window is closed
 - **SQLite** — search and command history
 - **AppIndicator3 / AyatanaAppIndicator3** — system tray icon
 - **GTK3** — tray menu
+- **wmctrl** — raises existing window instead of opening a duplicate
 
 ---
 
 ## Files
 
 ```
-MasterCLI/
+DeamonCLI/
 ├── linux_ref.py        # Main app (Textual TUI)
-├── commands_db.json    # All 172 commands
+├── commands_db.json    # All 287 commands
 ├── tray.py             # System tray daemon
-├── launch.sh           # Smart launcher (geometry, tray)
+├── launch.sh           # Smart launcher (tmux, geometry, tray)
 ├── install.sh          # Installer / uninstaller
 └── DeamonCLI_logo.png  # App icon
 ```
