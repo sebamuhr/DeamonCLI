@@ -558,11 +558,14 @@ class DeamonCLIApp(App):
         margin: 0 0 1 0;
     }
     .action-row {
-        height: auto;
+        height: 3;
         margin-top: 1;
     }
     .action-row Button {
+        height: 3;
+        min-width: 14;
         margin-right: 1;
+        content-align: center middle;
     }
 
     /* ── Recent searches ── */
