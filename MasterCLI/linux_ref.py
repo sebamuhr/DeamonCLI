@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Linux Reference — find commands by what they do, not by their name."""
 
-import os, sys, json, sqlite3, subprocess, shutil, difflib
+import os, sys, json, sqlite3, subprocess, shutil, difflib, socket
 from datetime import datetime
 from pathlib import Path
 
@@ -254,12 +254,12 @@ def copy_to_clipboard(text: str) -> bool:
                 pass
     return False
 
-def run_command(cmd: str):
+def run_command(cmd: str, cwd: str = None):
     try:
-        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=15)
+        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30, cwd=cwd)
         return r.stdout, r.stderr, r.returncode
     except subprocess.TimeoutExpired:
-        return "", "Timed out after 15 seconds.", 1
+        return "", "Timed out after 30 seconds.", 1
     except Exception as e:
         return "", str(e), 1
 
@@ -314,24 +314,14 @@ class CommandDetail(Vertical):
 
     @work(thread=True)
     def _do_run(self, cmd: dict, btn: Button) -> None:
-        out, err, rc = run_command(cmd["command"])
+        cwd = getattr(self.app, '_cwd', None)
+        out, err, rc = run_command(cmd["command"], cwd=cwd)
         self.app.call_from_thread(self._show_result, btn, cmd["title"], out, err, rc)
 
     def _show_result(self, btn: Button, title: str, out: str, err: str, rc: int) -> None:
         btn.disabled = False
         btn.label = "▶   Run it"
-        log = self.app.query_one("#terminal-log", RichLog)
-        dash = "─" * max(0, 54 - len(title))
-        log.write(Text(f"  ▶  {title}  {dash}", style="bold cyan"))
-        if out:
-            log.write(Text(out.rstrip()))
-        if err:
-            log.write(Text(err.rstrip(), style="bold red"))
-        if not out and not err:
-            style = "bold green" if rc == 0 else "bold red"
-            log.write(Text("  ✓  Done." if rc == 0 else f"  ✗  Exited with code {rc}", style=style))
-        log.write(Text(""))
-        log.scroll_end(animate=False)
+        self.app._write_terminal_output(title, out, err, rc)
 
 # ── Main App ──────────────────────────────────────────────────────────────────
 
@@ -388,20 +378,41 @@ class DeamonCLIApp(App):
         background: $background;
         border-bottom: solid $primary-darken-2;
     }
-    #output-header {
-        height: 1;
-        background: $panel;
+
+    /* ── Embedded terminal ── */
+    #terminal-log {
+        height: 1fr;
+        background: $surface;
+        padding: 0 1;
+        border: none;
+    }
+    #terminal-input-row {
+        height: 3;
+        background: $surface;
+        border-top: solid $primary-darken-2;
         align: left middle;
     }
-    #output-label {
+    #terminal-prompt {
+        width: auto;
+        height: 1;
+        padding: 0 0 0 1;
+        color: $success;
+        text-style: bold;
+    }
+    #terminal-input {
         width: 1fr;
-        color: $text-muted;
-        padding: 0 2;
+        height: 1;
+        background: $surface;
+        border: none;
+        padding: 0;
+        color: $text;
     }
     #clear-output-btn {
-        min-width: 10;
+        width: auto;
+        min-width: 3;
         height: 1;
         padding: 0 1;
+        margin: 0 1 0 0;
         border: none;
         background: transparent;
         color: $text-muted;
@@ -409,12 +420,6 @@ class DeamonCLIApp(App):
     #clear-output-btn:hover {
         background: $error-darken-3;
         color: $error;
-    }
-    #terminal-log {
-        height: 1fr;
-        background: $surface;
-        padding: 0 1;
-        border: none;
     }
 
     /* ── Welcome ── */
@@ -512,6 +517,23 @@ class DeamonCLIApp(App):
         self._results: list     = []
         self._recent: list      = []
         self._deleting_search   = False
+        self._cwd               = str(Path.home())
+
+    @property
+    def _prompt(self) -> str:
+        user = os.environ.get('USER', os.environ.get('USERNAME', 'user'))
+        try:
+            host = socket.gethostname()
+        except Exception:
+            host = 'localhost'
+        home = str(Path.home())
+        if self._cwd == home:
+            short = '~'
+        elif self._cwd.startswith(home + '/'):
+            short = '~' + self._cwd[len(home):]
+        else:
+            short = self._cwd
+        return f"{user}@{host}:{short}$ "
 
     # ── Layout ───────────────────────────────────────────────────────────────
 
@@ -533,16 +555,18 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
-                with Horizontal(id="output-header"):
-                    yield Label("── Output ──", id="output-label")
-                    yield Button("🗑  Clear", id="clear-output-btn")
                 yield RichLog(id="terminal-log", highlight=True, wrap=True)
+                with Horizontal(id="terminal-input-row"):
+                    yield Label("", id="terminal-prompt", markup=False)
+                    yield Input(id="terminal-input", placeholder="")
+                    yield Button("🗑", id="clear-output-btn")
 
         yield Footer()
 
     def on_mount(self) -> None:
+        self.query_one("#terminal-prompt", Label).update(self._prompt)
         log = self.query_one("#terminal-log", RichLog)
-        log.write(Text("  Run a command above — output will appear here.", style="dim"))
+        log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -574,9 +598,62 @@ class DeamonCLIApp(App):
             self._show_recent_searches()
 
     def on_input_submitted(self, event: Input.Submitted):
-        """Save search to history when user presses Enter."""
         if event.input.id == "search-input":
             save_search(self._hcon, event.value.strip())
+        elif event.input.id == "terminal-input":
+            cmd = event.value.strip()
+            event.input.value = ""
+            if cmd:
+                self._execute_terminal_cmd(cmd)
+
+    # ── Embedded terminal ─────────────────────────────────────────────────────
+
+    def _execute_terminal_cmd(self, cmd: str) -> None:
+        log = self.query_one("#terminal-log", RichLog)
+        log.write(Text(f"{self._prompt}{cmd}", style="bold green"))
+        # cd is handled locally — a subprocess can't change our directory
+        parts = cmd.split()
+        if parts and parts[0] == "cd":
+            target = os.path.expanduser(parts[1] if len(parts) > 1 else "~")
+            if not os.path.isabs(target):
+                target = os.path.join(self._cwd, target)
+            target = os.path.normpath(target)
+            if os.path.isdir(target):
+                self._cwd = target
+                self.query_one("#terminal-prompt", Label).update(self._prompt)
+            else:
+                log.write(Text(f"  cd: {target}: No such file or directory", style="bold red"))
+            log.scroll_end(animate=False)
+            return
+        self._run_terminal_cmd_async(cmd)
+
+    @work(thread=True)
+    def _run_terminal_cmd_async(self, cmd: str) -> None:
+        out, err, rc = run_command(cmd, cwd=self._cwd)
+        self.app.call_from_thread(self._append_terminal_output, out, err, rc)
+
+    def _append_terminal_output(self, out: str, err: str, rc: int) -> None:
+        log = self.query_one("#terminal-log", RichLog)
+        if out:
+            log.write(Text(out.rstrip()))
+        if err:
+            log.write(Text(err.rstrip(), style="bold red"))
+        if not out and not err and rc != 0:
+            log.write(Text(f"  ✗  Exited with code {rc}", style="bold red"))
+        log.scroll_end(animate=False)
+
+    def _write_terminal_output(self, title: str, out: str, err: str, rc: int) -> None:
+        log = self.query_one("#terminal-log", RichLog)
+        dash = "─" * max(0, 54 - len(title))
+        log.write(Text(f"  ▶  {title}  {dash}", style="bold cyan"))
+        if out:
+            log.write(Text(out.rstrip()))
+        if err:
+            log.write(Text(err.rstrip(), style="bold red"))
+        if not out and not err:
+            style = "bold green" if rc == 0 else "bold red"
+            log.write(Text("  ✓  Done." if rc == 0 else f"  ✗  Exited with code {rc}", style=style))
+        log.scroll_end(animate=False)
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
@@ -674,6 +751,7 @@ class DeamonCLIApp(App):
             return
         if event.button.id == "clear-output-btn":
             self.query_one("#terminal-log", RichLog).clear()
+            self.query_one("#terminal-input", Input).focus()
             return
 
     def on_unmount(self):
