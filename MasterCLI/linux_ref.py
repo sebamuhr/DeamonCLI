@@ -26,10 +26,26 @@ try:
 except ImportError:
     CLIPBOARD_OK = False
 
-APP_DIR   = Path(__file__).parent
-DB_PATH   = APP_DIR / "commands_db.json"
-HIST_PATH = APP_DIR / "history.db"
-HOME      = Path.home()
+APP_DIR     = Path(__file__).parent
+DB_PATH     = APP_DIR / "commands_db.json"
+HIST_PATH   = APP_DIR / "history.db"
+CONFIG_PATH = Path.home() / ".config" / "deamoncli" / "config.json"
+HOME        = Path.home()
+
+DEFAULT_LEFT_WIDTH = 46   # terminal columns
+
+def load_config() -> dict:
+    try:
+        return json.loads(CONFIG_PATH.read_text())
+    except Exception:
+        return {}
+
+def save_config(data: dict) -> None:
+    try:
+        CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        CONFIG_PATH.write_text(json.dumps(data))
+    except Exception:
+        pass
 
 # ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -337,7 +353,7 @@ class DeamonCLIApp(App):
 
     /* ── Left panel ── */
     #left {
-        width: 38;
+        width: 46;
         border-right: solid $primary-darken-2;
         background: $panel;
     }
@@ -507,7 +523,9 @@ class DeamonCLIApp(App):
     """
 
     BINDINGS = [
-        Binding("ctrl+q", "quit", "Quit"),
+        Binding("ctrl+q", "quit",        "Quit"),
+        Binding("f9",     "shrink_left", "← panel", show=True),
+        Binding("f10",    "grow_left",   "→ panel", show=True),
     ]
 
     def __init__(self):
@@ -518,6 +536,8 @@ class DeamonCLIApp(App):
         self._recent: list      = []
         self._deleting_search   = False
         self._cwd               = str(Path.home())
+        cfg                     = load_config()
+        self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
 
     @property
     def _prompt(self) -> str:
@@ -564,9 +584,27 @@ class DeamonCLIApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
+        # Apply saved left-panel width
+        self.query_one("#left", Vertical).styles.width = self._left_width
         self.query_one("#terminal-prompt", Label).update(self._prompt)
         log = self.query_one("#terminal-log", RichLog)
         log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
+
+    # ── Column resize ─────────────────────────────────────────────────────────
+
+    def action_shrink_left(self) -> None:
+        panel = self.query_one("#left", Vertical)
+        new_w = max(28, self._left_width - 3)
+        panel.styles.width = new_w
+        self._left_width = new_w
+        save_config({"left_width": new_w})
+
+    def action_grow_left(self) -> None:
+        panel = self.query_one("#left", Vertical)
+        new_w = min(80, self._left_width + 3)
+        panel.styles.width = new_w
+        self._left_width = new_w
+        save_config({"left_width": new_w})
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -755,6 +793,7 @@ class DeamonCLIApp(App):
             return
 
     def on_unmount(self):
+        save_config({"left_width": self._left_width})
         self._hcon.close()
 
 
