@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """DeamonCLI system tray icon — runs in background, shows icon near wifi/bluetooth."""
-import gi, os, shutil, subprocess, sys, threading, urllib.request, json as _json
+import datetime, gi, os, shutil, subprocess, sys, threading, urllib.request, json as _json
 from pathlib import Path
 
-ICON        = str(Path.home() / ".local/share/icons/deamoncli.png")
-SCRIPT_DIR  = Path(__file__).parent
-INSTALL_DIR = Path.home() / ".local/share/deamoncli"
+ICON         = str(Path.home() / ".local/share/icons/deamoncli.png")
+SCRIPT_DIR   = Path(__file__).parent
+INSTALL_DIR  = Path.home() / ".local/share/deamoncli"
 VERSION_FILE = INSTALL_DIR / "version"
-SESSION     = "deamoncli"
+SESSION      = "deamoncli"
+DESKTOP      = str(Path.home() / ".local/share/applications/deamoncli.desktop")
+LAUNCH       = str(Path.home() / ".local/bin/deamoncli")   # installed launcher
 
 REPO   = "sebamuhr/DeamonCLI"
 BRANCH = "master"
@@ -26,15 +28,20 @@ except (ValueError, ImportError):
 
 from gi.repository import Gtk, GLib
 
+# ── Logging ───────────────────────────────────────────────────────────────────
+
+LOG = "/tmp/deamoncli_open.log"
+
+def log(msg):
+    ts = datetime.datetime.now().strftime("%H:%M:%S")
+    with open(LOG, "a") as f:
+        f.write(f"[{ts}] {msg}\n")
+
 # ── Session environment ───────────────────────────────────────────────────────
 
 def _session_env():
-    """Build env with the real DBUS session bus address.
-    Reads from gnome-shell/gnome-session process so it works even when the
-    tray was started at login before the session vars were exported."""
+    """Get the real desktop session environment (DBUS etc) from gnome-shell."""
     env = {**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":0")}
-
-    # Pull key vars from the running desktop session process
     for proc in ["gnome-shell", "gnome-session", "xfce4-session", "plasmashell"]:
         pids = subprocess.run(["pgrep", proc], capture_output=True, text=True).stdout.split()
         if pids:
@@ -50,59 +57,63 @@ def _session_env():
                 break
             except Exception:
                 pass
-
-    # Fallback: well-known socket path
     if "DBUS_SESSION_BUS_ADDRESS" not in env:
         bus = f"/run/user/{os.getuid()}/bus"
         if os.path.exists(bus):
             env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
     if "XDG_RUNTIME_DIR" not in env:
         env["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
-
     return env
 
 # ── Open ──────────────────────────────────────────────────────────────────────
 
 def open_app(_=None):
     env = _session_env()
+    log(f"--- open_app ---")
+    log(f"DBUS={env.get('DBUS_SESSION_BUS_ADDRESS', 'MISSING')}")
+    log(f"DISPLAY={env.get('DISPLAY', 'MISSING')}")
 
-    # Raise window if already visible
+    # 1. Raise window if already on screen
     if shutil.which("wmctrl"):
         r = subprocess.run(["wmctrl", "-a", "DeamonCLI"], capture_output=True, env=env)
+        log(f"wmctrl rc={r.returncode} err={r.stderr.decode().strip()}")
         if r.returncode == 0:
             return
 
-    # Start tmux session if not running
-    if shutil.which("tmux"):
-        session_running = subprocess.run(
-            ["tmux", "has-session", "-t", SESSION], capture_output=True
-        ).returncode == 0
+    # 2. Make sure the tmux session (app) is running
+    session_up = subprocess.run(
+        ["tmux", "has-session", "-t", SESSION], capture_output=True
+    ).returncode == 0
+    log(f"tmux session up={session_up}")
+    if not session_up:
+        subprocess.Popen(["tmux", "new-session", "-d", "-s", SESSION, "-x", "220", "-y", "50",
+                          f"TERM=xterm-256color python3 {INSTALL_DIR}/linux_ref.py"])
+        log("started new tmux session")
 
-        if not session_running:
-            subprocess.Popen(
-                ["tmux", "new-session", "-d", "-s", SESSION, "-x", "220", "-y", "50",
-                 f"TERM=xterm-256color python3 {INSTALL_DIR}/linux_ref.py"],
-                env=env,
-            )
+    # 3. Open a terminal window (try three methods, log each)
 
-        # Open gnome-terminal directly — no intermediate bash script
-        subprocess.Popen(
-            ["gnome-terminal", "--class=DeamonCLI", "--title=DeamonCLI",
+    # Method A — systemd-run: runs in the user's full session, always has DBUS
+    if shutil.which("systemd-run"):
+        r = subprocess.run(
+            ["systemd-run", "--user", "--no-block",
+             "gnome-terminal", "--class=DeamonCLI", "--title=DeamonCLI",
              "--", "tmux", "attach-session", "-t", SESSION],
-            env=env,
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            capture_output=True
         )
-    else:
-        subprocess.Popen(
-            ["gnome-terminal", "--class=DeamonCLI", "--title=DeamonCLI",
-             "--", "bash", "-c", f"python3 {INSTALL_DIR}/linux_ref.py"],
-            env=env,
-            start_new_session=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        log(f"systemd-run rc={r.returncode} err={r.stderr.decode().strip()}")
+        if r.returncode == 0:
+            return
+
+    # Method B — gio launch: same code path as clicking in the apps menu
+    if shutil.which("gio") and os.path.exists(DESKTOP):
+        r = subprocess.run(["gio", "launch", DESKTOP], capture_output=True, env=env)
+        log(f"gio launch rc={r.returncode} err={r.stderr.decode().strip()}")
+        if r.returncode == 0:
+            return
+
+    # Method C — direct Popen with injected session env
+    r = subprocess.Popen(["bash", LAUNCH], env=env, start_new_session=True)
+    log(f"direct Popen pid={r.pid}")
 
 # ── Quit ──────────────────────────────────────────────────────────────────────
 
@@ -127,7 +138,6 @@ def preferences_cb(_=None):
     title.set_halign(Gtk.Align.START)
     box.pack_start(title, False, False, 0)
 
-    # ── Update section ────────────────────────────────────────────────────
     sep1 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
     box.pack_start(sep1, False, False, 4)
 
@@ -140,7 +150,6 @@ def preferences_cb(_=None):
     update_row.pack_start(update_btn, False, False, 0)
     box.pack_start(update_row, False, False, 0)
 
-    # ── Uninstall section ─────────────────────────────────────────────────
     sep2 = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
     box.pack_start(sep2, False, False, 4)
 
@@ -175,22 +184,18 @@ def preferences_cb(_=None):
 # ── Uninstall ─────────────────────────────────────────────────────────────────
 
 def _confirm_uninstall():
-    confirm = Gtk.MessageDialog(
-        message_type=Gtk.MessageType.WARNING,
-        buttons=Gtk.ButtonsType.NONE,
+    d = Gtk.MessageDialog(
+        message_type=Gtk.MessageType.WARNING, buttons=Gtk.ButtonsType.NONE,
         text="Uninstall DeamonCLI?",
-        secondary_text=(
-            "This will remove all app files, the desktop shortcut,\n"
-            "the tray icon, and the launcher from your system."
-        ),
+        secondary_text="This will remove all app files, the desktop shortcut,\n"
+                       "the tray icon, and the launcher from your system.",
     )
-    confirm.set_title("Uninstall DeamonCLI")
-    confirm.set_keep_above(True)
-    confirm.add_button("Cancel", Gtk.ResponseType.CANCEL)
-    btn = confirm.add_button("Uninstall", Gtk.ResponseType.OK)
+    d.set_title("Uninstall DeamonCLI")
+    d.set_keep_above(True)
+    d.add_button("Cancel", Gtk.ResponseType.CANCEL)
+    btn = d.add_button("Uninstall", Gtk.ResponseType.OK)
     btn.get_style_context().add_class("destructive-action")
-    response = confirm.run()
-    confirm.destroy()
+    response = d.run(); d.destroy()
     if response == Gtk.ResponseType.OK:
         _do_uninstall()
 
@@ -214,35 +219,17 @@ def _do_uninstall():
             p.unlink(missing_ok=True)
     subprocess.call(["tmux", "kill-session", "-t", SESSION])
     subprocess.call(["pkill", "-f", "linux_ref.py"])
-    subprocess.call(
-        ["update-desktop-database", str(home / ".local/share/applications")],
-        stderr=subprocess.DEVNULL,
-    )
+    subprocess.call(["update-desktop-database",
+                     str(home / ".local/share/applications")],
+                    stderr=subprocess.DEVNULL)
     Gtk.main_quit()
 
 # ── Update ────────────────────────────────────────────────────────────────────
 
-def _gh_request(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "DeamonCLI-updater"})
-    with urllib.request.urlopen(req, timeout=10) as r:
-        return _json.loads(r.read())
-
-def _raw_url(fname):
-    return f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/DeamonCLI/{fname}"
-
-def _local_sha():
-    try:
-        return VERSION_FILE.read_text().strip()
-    except Exception:
-        return ""
-
 def _simple_dialog(msg_type, title, text, secondary, buttons):
-    d = Gtk.MessageDialog(
-        message_type=msg_type, buttons=Gtk.ButtonsType.NONE,
-        text=text, secondary_text=secondary,
-    )
-    d.set_title(title)
-    d.set_keep_above(True)
+    d = Gtk.MessageDialog(message_type=msg_type, buttons=Gtk.ButtonsType.NONE,
+                          text=text, secondary_text=secondary)
+    d.set_title(title); d.set_keep_above(True)
     for label, resp in buttons:
         d.add_button(label, resp)
     r = d.run(); d.destroy(); return r
@@ -252,7 +239,11 @@ def _run_update():
 
     def do_check():
         try:
-            data = _gh_request(f"https://api.github.com/repos/{REPO}/commits/{BRANCH}")
+            req = urllib.request.Request(
+                f"https://api.github.com/repos/{REPO}/commits/{BRANCH}",
+                headers={"User-Agent": "DeamonCLI-updater"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = _json.loads(r.read())
             result["sha"] = data["sha"]
             result["msg"] = data["commit"]["message"].split("\n")[0]
         except Exception as e:
@@ -261,11 +252,8 @@ def _run_update():
 
     checking = Gtk.MessageDialog(
         message_type=Gtk.MessageType.INFO, buttons=Gtk.ButtonsType.NONE,
-        text="Checking for updates…", secondary_text="Connecting to GitHub.",
-    )
-    checking.set_title("DeamonCLI Update")
-    checking.set_keep_above(True)
-    checking.show()
+        text="Checking for updates…", secondary_text="Connecting to GitHub.")
+    checking.set_title("DeamonCLI Update"); checking.set_keep_above(True); checking.show()
 
     def show_result():
         checking.destroy()
@@ -274,27 +262,27 @@ def _run_update():
                            "Could not reach GitHub", result["error"],
                            [("OK", Gtk.ResponseType.OK)])
             return
-
         sha, msg = result["sha"], result["msg"]
-        if _local_sha() == sha:
+        try:
+            local = VERSION_FILE.read_text().strip()
+        except Exception:
+            local = ""
+        if local == sha:
             _simple_dialog(Gtk.MessageType.INFO, "Up to date",
                            "DeamonCLI is up to date",
                            "You already have the latest version.",
                            [("OK", Gtk.ResponseType.OK)])
             return
-
         response = _simple_dialog(
             Gtk.MessageType.QUESTION, "Update available",
             "A new version is available",
             f"Latest change:\n{msg}\n\nUpdate now?",
-            [("Cancel", Gtk.ResponseType.CANCEL), ("Update", Gtk.ResponseType.OK)],
-        )
+            [("Cancel", Gtk.ResponseType.CANCEL), ("Update", Gtk.ResponseType.OK)])
         if response != Gtk.ResponseType.OK:
             return
 
         progress = Gtk.Dialog(title="Updating DeamonCLI…")
-        progress.set_keep_above(True)
-        progress.set_border_width(20)
+        progress.set_keep_above(True); progress.set_border_width(20)
         lbl = Gtk.Label(label="Starting download…")
         progress.get_content_area().pack_start(lbl, True, True, 8)
         progress.show_all()
@@ -304,15 +292,16 @@ def _run_update():
                 for fname in FILES:
                     GLib.idle_add(lbl.set_text, f"Downloading {fname}…")
                     req = urllib.request.Request(
-                        _raw_url(fname), headers={"User-Agent": "DeamonCLI-updater"})
+                        f"https://raw.githubusercontent.com/{REPO}/{BRANCH}/DeamonCLI/{fname}",
+                        headers={"User-Agent": "DeamonCLI-updater"})
                     with urllib.request.urlopen(req, timeout=30) as r:
                         (INSTALL_DIR / fname).write_bytes(r.read())
                 VERSION_FILE.write_text(sha)
-                GLib.idle_add(download_done, None)
+                GLib.idle_add(done, None)
             except Exception as e:
-                GLib.idle_add(download_done, str(e))
+                GLib.idle_add(done, str(e))
 
-        def download_done(error):
+        def done(error):
             progress.destroy()
             if error:
                 _simple_dialog(Gtk.MessageType.ERROR, "Update failed",
@@ -334,16 +323,14 @@ def _run_update():
 
 # ── Indicator ─────────────────────────────────────────────────────────────────
 
-ind = AI.Indicator.new(
-    "deamoncli", ICON, AI.IndicatorCategory.APPLICATION_STATUS
-)
+ind = AI.Indicator.new("deamoncli", ICON, AI.IndicatorCategory.APPLICATION_STATUS)
 ind.set_status(AI.IndicatorStatus.ACTIVE)
 
 menu = Gtk.Menu()
 for label, cb in [
     ("Open DeamonCLI", open_app),
-    ("Preferences", preferences_cb),
-    ("Quit", quit_cb),
+    ("Preferences",    preferences_cb),
+    ("Quit",           quit_cb),
 ]:
     item = Gtk.MenuItem(label=label)
     item.connect("activate", cb)
