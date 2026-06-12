@@ -143,6 +143,11 @@ for f in linux_ref.py commands_db.json DeamonCLI_logo.png tray.py; do
 done
 ok "App files copied to $INSTALL_DIR"
 
+# Save version hash so the tray can detect updates
+git -C "$SRC" rev-parse HEAD 2>/dev/null > "$INSTALL_DIR/version" \
+    || echo "" > "$INSTALL_DIR/version"
+ok "Version saved for update checks"
+
 cp "$SRC/DeamonCLI_logo.png" "$ICON_PATH"
 ok "Icon installed"
 
