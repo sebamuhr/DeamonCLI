@@ -71,39 +71,30 @@ def open_app(_=None):
     env = _session_env()
     log("--- open_app ---")
 
-    # ── Check if a DeamonCLI window actually exists ───────────────────────────
-    window_exists = False
-    if shutil.which("wmctrl"):
-        listed = subprocess.run(
-            ["wmctrl", "-l"], capture_output=True, text=True, env=env
-        ).stdout
-        log(f"wmctrl -l output:\n{listed.strip()}")
-        window_exists = "DeamonCLI" in listed
+    # ── Find the REAL app window (by class or exact title, never substring) ────
+    win_id = _find_window(env)
+    log(f"found window id={win_id}")
 
-    if window_exists:
-        # Get current desktop number so we can move the window here
-        desk_out = subprocess.run(
-            ["wmctrl", "-d"], capture_output=True, text=True, env=env
-        ).stdout
+    if win_id:
+        # Current desktop, so we can pull the window onto it
         current_desk = "0"
-        for line in desk_out.splitlines():
+        for line in subprocess.run(["wmctrl", "-d"], capture_output=True,
+                                   text=True, env=env).stdout.splitlines():
             if "*" in line:
                 current_desk = line.split()[0]
                 break
-        log(f"current desktop={current_desk}")
-
-        # Move window to current desktop, unminimize, then focus
-        subprocess.run(["wmctrl", "-r", "DeamonCLI", "-t", current_desk],
+        # Target the window by ID (-i) so we never hit the wrong window
+        subprocess.run(["wmctrl", "-i", "-r", win_id, "-t", current_desk],
                        capture_output=True, env=env)
-        subprocess.run(["wmctrl", "-r", "DeamonCLI", "-b", "remove,hidden"],
+        subprocess.run(["wmctrl", "-i", "-r", win_id, "-b", "remove,hidden"],
                        capture_output=True, env=env)
-        r = subprocess.run(["wmctrl", "-a", "DeamonCLI"],
+        r = subprocess.run(["wmctrl", "-i", "-a", win_id],
                            capture_output=True, env=env)
-        log(f"wmctrl raise rc={r.returncode}")
+        log(f"raised window rc={r.returncode}")
         return
 
     # ── No window — open a new one ────────────────────────────────────────────
-    log("no window found, opening new terminal")
+    log("no app window found, opening a new terminal")
 
     session_up = subprocess.run(
         ["tmux", "has-session", "-t", SESSION], capture_output=True
@@ -113,6 +104,12 @@ def open_app(_=None):
         subprocess.Popen(["tmux", "new-session", "-d", "-s", SESSION, "-x", "220", "-y", "50",
                           f"TERM=xterm-256color python3 {INSTALL_DIR}/linux_ref.py"])
         log("started new tmux session")
+
+    # Stop tmux from changing the terminal title so we can find the window later
+    for opt in (["set-option", "-t", SESSION, "set-titles", "off"],
+                ["set-window-option", "-t", SESSION, "allow-rename", "off"],
+                ["set-window-option", "-t", SESSION, "automatic-rename", "off"]):
+        subprocess.run(["tmux", *opt], capture_output=True)
 
     # Method A: systemd-run (correct way to launch GUI from a background process)
     if shutil.which("systemd-run"):
@@ -136,6 +133,26 @@ def open_app(_=None):
     # Method C: direct Popen
     p = subprocess.Popen(["bash", LAUNCH], env=env, start_new_session=True)
     log(f"direct Popen pid={p.pid}")
+
+def _find_window(env):
+    """Return the window ID of the DeamonCLI app window, or None.
+
+    Matches on WM_CLASS containing 'deamoncli', or an exact title of
+    'DeamonCLI'. Crucially this does NOT match a terminal that merely has
+    '~/DeamonCLI' in its title (the working directory)."""
+    if not shutil.which("wmctrl"):
+        return None
+    out = subprocess.run(["wmctrl", "-lx"], capture_output=True,
+                         text=True, env=env).stdout
+    log(f"wmctrl -lx:\n{out.strip()}")
+    for line in out.splitlines():
+        parts = line.split(None, 4)        # id, desktop, class, host, title
+        if len(parts) < 5:
+            continue
+        wid, _desk, wclass, _host, title = parts
+        if "deamoncli" in wclass.lower() or title.strip() == "DeamonCLI":
+            return wid
+    return None
 
 # ── Quit ──────────────────────────────────────────────────────────────────────
 
