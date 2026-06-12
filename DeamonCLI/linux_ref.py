@@ -11,7 +11,7 @@ try:
     from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
     from textual.widgets import (
         Header, Footer, ListView, ListItem, Label,
-        Button, Input, Static, RichLog, DataTable,
+        Button, Input, Static, DataTable,
         TabbedContent, TabPane, Rule
     )
     from textual.binding import Binding
@@ -418,28 +418,18 @@ class CommandDetail(Vertical):
         c = self.cmd
         if "btn-run" in event.button.classes:
             event.stop()
-            btn = event.button
-            btn.disabled = True
-            btn.label = "⏳  Running…"
             save_history(self.hcon, c["title"], c["command"], c.get("category",""), "ran")
-            self._do_run(c, btn)
+            inp = self.app.query_one("#terminal-input", Input)
+            inp.value = c["command"]
+            inp.focus()
+            self.app._execute_terminal_cmd(c["command"])
+            inp.value = ""
         elif "btn-copy" in event.button.classes:
             event.stop()
             ok = copy_to_clipboard(c["command"])
             save_history(self.hcon, c["title"], c["command"], c.get("category",""), "copied")
             msg = "📋  Copied!" if ok else "Could not copy — run:  sudo apt install xclip"
             self.app.notify(msg, severity="information" if ok else "warning")
-
-    @work(thread=True)
-    def _do_run(self, cmd: dict, btn: Button) -> None:
-        cwd = getattr(self.app, '_cwd', None)
-        out, err, rc = run_command(cmd["command"], cwd=cwd)
-        self.app.call_from_thread(self._show_result, btn, cmd["title"], out, err, rc)
-
-    def _show_result(self, btn: Button, title: str, out: str, err: str, rc: int) -> None:
-        btn.disabled = False
-        btn.label = "▶   Run it"
-        self.app._write_terminal_output(title, out, err, rc)
 
 # ── Main App ──────────────────────────────────────────────────────────────────
 
@@ -496,13 +486,6 @@ class DeamonCLIApp(App):
     }
 
     /* ── Embedded terminal ── */
-    #terminal-log {
-        height: 1fr;
-        min-height: 8;
-        background: $surface;
-        padding: 0 1;
-        border: none;
-    }
     #terminal-input-row {
         height: 3;
         background: $surface;
@@ -524,21 +507,6 @@ class DeamonCLIApp(App):
         padding: 0;
         color: $text;
     }
-    #clear-output-btn {
-        width: auto;
-        min-width: 3;
-        height: 1;
-        padding: 0 1;
-        margin: 0 1 0 0;
-        border: none;
-        background: transparent;
-        color: $text-muted;
-    }
-    #clear-output-btn:hover {
-        background: $error-darken-3;
-        color: $error;
-    }
-
     /* ── Welcome ── */
     #welcome {
         color: $text-muted;
@@ -674,11 +642,9 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
-                yield RichLog(id="terminal-log", highlight=True, wrap=True)
                 with Horizontal(id="terminal-input-row"):
                     yield Label("", id="terminal-prompt", markup=False)
                     yield Input(id="terminal-input", placeholder="")
-                    yield Button("🗑", id="clear-output-btn")
 
         yield Footer()
 
@@ -687,8 +653,6 @@ class DeamonCLIApp(App):
         # Detail panel auto-sizes to content; cap at 55% so terminal always has room
         self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "55%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
-        log = self.query_one("#terminal-log", RichLog)
-        log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -744,8 +708,6 @@ class DeamonCLIApp(App):
     # ── Embedded terminal ─────────────────────────────────────────────────────
 
     def _execute_terminal_cmd(self, cmd: str) -> None:
-        log = self.query_one("#terminal-log", RichLog)
-        log.write(Text(f"{self._prompt}{cmd}", style="bold green"))
         # cd is handled locally — a subprocess can't change our directory
         parts = cmd.split()
         if parts and parts[0] == "cd":
@@ -756,39 +718,15 @@ class DeamonCLIApp(App):
             if os.path.isdir(target):
                 self._cwd = target
                 self.query_one("#terminal-prompt", Label).update(self._prompt)
-            else:
-                log.write(Text(f"  cd: {target}: No such file or directory", style="bold red"))
-            log.scroll_end(animate=False)
             return
         self._run_terminal_cmd_async(cmd)
 
     @work(thread=True)
     def _run_terminal_cmd_async(self, cmd: str) -> None:
-        out, err, rc = run_command(cmd, cwd=self._cwd)
-        self.app.call_from_thread(self._append_terminal_output, out, err, rc)
-
-    def _append_terminal_output(self, out: str, err: str, rc: int) -> None:
-        log = self.query_one("#terminal-log", RichLog)
-        if out:
-            log.write(Text(out.rstrip()))
-        if err:
-            log.write(Text(err.rstrip(), style="bold red"))
-        if not out and not err and rc != 0:
-            log.write(Text(f"  ✗  Exited with code {rc}", style="bold red"))
-        log.scroll_end(animate=False)
+        run_command(cmd, cwd=self._cwd)
 
     def _write_terminal_output(self, title: str, out: str, err: str, rc: int) -> None:
-        log = self.query_one("#terminal-log", RichLog)
-        dash = "─" * max(0, 54 - len(title))
-        log.write(Text(f"  ▶  {title}  {dash}", style="bold cyan"))
-        if out:
-            log.write(Text(out.rstrip()))
-        if err:
-            log.write(Text(err.rstrip(), style="bold red"))
-        if not out and not err:
-            style = "bold green" if rc == 0 else "bold red"
-            log.write(Text("  ✓  Done." if rc == 0 else f"  ✗  Exited with code {rc}", style=style))
-        log.scroll_end(animate=False)
+        pass  # output destination TBD
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
@@ -888,10 +826,6 @@ class DeamonCLIApp(App):
             self._hcon.commit()
             self._load_history_table()
             self.notify("History cleared.")
-            return
-        if event.button.id == "clear-output-btn":
-            self.query_one("#terminal-log", RichLog).clear()
-            self.query_one("#terminal-input", Input).focus()
             return
 
     def on_unmount(self):
