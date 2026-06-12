@@ -50,6 +50,7 @@ def do_uninstall():
         home / ".local/share/applications/deamoncli.desktop",
         home / ".local/share/applications/linuxref.desktop",
         home / "Desktop/deamoncli.desktop",
+        home / "Desktop/linuxref.desktop",
         home / ".local/bin/deamoncli",
         home / ".config/autostart/deamoncli-tray.desktop",
         home / ".config/deamoncli/config.json",
