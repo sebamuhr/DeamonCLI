@@ -15,7 +15,7 @@ try:
     )
     from textual.screen import ModalScreen
     from textual.binding import Binding
-    from textual.worker import work
+    from textual._work_decorator import work
     from rich.text import Text
 except ImportError:
     print("Run: pip3 install --break-system-packages textual")
