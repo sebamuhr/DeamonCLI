@@ -11,7 +11,7 @@ Stop googling the same commands over and over. DeamonCLI lives in your system tr
 ## What it does
 
 - **Search by intent** — type *"make sound louder"*, *"scan my network"*, or *"connect to server"* and it finds the right command
-- **287 commands** across 24 categories: Sound, WiFi, Files, SSH, Git, Security, Bluetooth, USB, Processes, and more
+- **413 commands** across 25 categories: Sound, WiFi, Files, SSH, Git, Security, Bluetooth, USB, AI & Ollama, and more
 - **Built-in terminal** — run commands directly inside the app and keep working without switching windows
 - **System tray icon** — lives near your wifi/bluetooth icons; click to open or quit
 - **Runs in the background** — closing the window (X) keeps the app alive via tmux; click the tray icon to bring it back
@@ -119,6 +119,7 @@ The bottom panel is a real terminal session. You can:
 | Monitoring & Performance | htop, iotop, vmstat, perf |
 | Database CLI | SQLite, MySQL, PostgreSQL |
 | Cloud & DevOps | AWS CLI, gcloud, kubectl, Terraform |
+| AI & Ollama | Ollama, Claude Code, Gemini CLI, Aider, Fabric, Shell-GPT, embeddings, RAG |
 
 ---
 
@@ -138,7 +139,7 @@ The bottom panel is a real terminal session. You can:
 ```
 DeamonCLI/
 ├── linux_ref.py        # Main app (Textual TUI)
-├── commands_db.json    # All 287 commands
+├── commands_db.json    # All 413 commands
 ├── tray.py             # System tray daemon
 ├── launch.sh           # Smart launcher (tmux, geometry, tray)
 ├── install.sh          # Installer / uninstaller

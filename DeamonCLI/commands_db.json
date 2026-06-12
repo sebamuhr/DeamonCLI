@@ -6060,6 +6060,1436 @@
       ],
       "can_run": false,
       "shell_only_reason": "Replace ./photo.jpg with your image path. Run in terminal."
+    },
+    {
+      "id": "ai-pull-llama31",
+      "title": "Download Llama 3.1 8B",
+      "description": "Meta's Llama 3.1 with 128k context window \u2014 much longer than Llama 3. Great for summarising long documents, codebases, or long conversations. About 4.7 GB.",
+      "command": "ollama pull llama3.1",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.1",
+        "llama",
+        "meta",
+        "download",
+        "128k",
+        "context"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama31-70b",
+      "title": "Download Llama 3.1 70B (powerful)",
+      "description": "The 70B parameter version of Llama 3.1 \u2014 much more capable than 8B, approaching GPT-4 quality. Requires ~40 GB of VRAM or RAM. Slow on CPU only.",
+      "command": "ollama pull llama3.1:70b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.1",
+        "70b",
+        "large",
+        "powerful",
+        "meta",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama31-405b",
+      "title": "Download Llama 3.1 405B (flagship)",
+      "description": "Meta's largest open model \u2014 405 billion parameters, frontier-level quality. Requires massive hardware (multiple high-end GPUs or ~240 GB RAM). For research and high-end setups.",
+      "command": "ollama pull llama3.1:405b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.1",
+        "405b",
+        "flagship",
+        "largest",
+        "meta",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama32-1b",
+      "title": "Download Llama 3.2 1B (tiny, fast)",
+      "description": "Meta's tiny 1B model \u2014 runs on almost any hardware including Raspberry Pi. Useful for simple tasks, edge devices, or when speed matters more than quality. About 1.3 GB.",
+      "command": "ollama pull llama3.2:1b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.2",
+        "1b",
+        "tiny",
+        "fast",
+        "edge",
+        "small",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama32-3b",
+      "title": "Download Llama 3.2 3B",
+      "description": "Meta's compact 3B model \u2014 a great balance of size and capability. Runs well on most laptops. Good for chat and simple coding tasks. About 2 GB.",
+      "command": "ollama pull llama3.2:3b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.2",
+        "3b",
+        "compact",
+        "meta",
+        "download",
+        "laptop"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama32-vision",
+      "title": "Download Llama 3.2 Vision (11B)",
+      "description": "Meta's multimodal Llama 3.2 that can see and analyse images. Send it screenshots, photos, diagrams. About 7.9 GB. More capable than LLaVA for vision tasks.",
+      "command": "ollama pull llama3.2-vision",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.2",
+        "vision",
+        "image",
+        "multimodal",
+        "meta",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama33",
+      "title": "Download Llama 3.3 70B",
+      "description": "Meta's latest 70B model \u2014 matches Llama 3.1 405B quality at a fraction of the size. The best open-weight model for most tasks as of late 2024. About 43 GB.",
+      "command": "ollama pull llama3.3",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama3.3",
+        "70b",
+        "latest",
+        "meta",
+        "download",
+        "best"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mistral-nemo",
+      "title": "Download Mistral Nemo 12B",
+      "description": "Mistral and NVIDIA's joint 12B model \u2014 strong multilingual capabilities and a 128k context window. Better than Mistral 7B at reasoning and coding. About 7.1 GB.",
+      "command": "ollama pull mistral-nemo",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mistral",
+        "nemo",
+        "nvidia",
+        "12b",
+        "multilingual",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mistral-large",
+      "title": "Download Mistral Large 2 (123B)",
+      "description": "Mistral's flagship large model \u2014 123B parameters, top-tier quality for complex reasoning, coding, and analysis. Requires significant hardware. About 69 GB.",
+      "command": "ollama pull mistral-large",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mistral",
+        "large",
+        "123b",
+        "flagship",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mistral-small",
+      "title": "Download Mistral Small 22B",
+      "description": "Mistral's efficient mid-size model \u2014 great performance at 22B parameters. Good balance between Mistral 7B and Mistral Large. About 13 GB.",
+      "command": "ollama pull mistral-small",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mistral",
+        "small",
+        "22b",
+        "efficient",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mixtral",
+      "title": "Download Mixtral 8x7B (mixture of experts)",
+      "description": "Mistral's mixture-of-experts model \u2014 8 experts of 7B each, but only 2 activate per token. Effective quality of ~47B at the speed of ~13B. Excellent for coding and reasoning. About 26 GB.",
+      "command": "ollama pull mixtral",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mixtral",
+        "moe",
+        "mixture",
+        "experts",
+        "mistral",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mixtral-8x22b",
+      "title": "Download Mixtral 8x22B (large MoE)",
+      "description": "The larger Mixtral mixture-of-experts model \u2014 8 experts of 22B each. Near GPT-4 quality on many benchmarks. Needs ~60 GB RAM/VRAM.",
+      "command": "ollama pull mixtral:8x22b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mixtral",
+        "8x22b",
+        "large",
+        "moe",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25",
+      "title": "Download Qwen 2.5 7B",
+      "description": "Alibaba's Qwen 2.5 \u2014 top-performing 7B model, beats many larger models on benchmarks. Excellent at coding, math, and following instructions. About 4.7 GB.",
+      "command": "ollama pull qwen2.5",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5",
+        "qwen",
+        "alibaba",
+        "7b",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25-14b",
+      "title": "Download Qwen 2.5 14B",
+      "description": "The 14B version of Qwen 2.5 \u2014 noticeably smarter than the 7B for complex tasks while still running on most gaming PCs with 16 GB+ VRAM. About 9 GB.",
+      "command": "ollama pull qwen2.5:14b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5",
+        "14b",
+        "alibaba",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25-32b",
+      "title": "Download Qwen 2.5 32B",
+      "description": "Qwen 2.5 at 32B \u2014 approaches 70B quality at roughly half the size. One of the best open models for complex reasoning in its class. About 20 GB.",
+      "command": "ollama pull qwen2.5:32b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5",
+        "32b",
+        "alibaba",
+        "download",
+        "reasoning"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25-72b",
+      "title": "Download Qwen 2.5 72B (flagship)",
+      "description": "Qwen 2.5's largest version \u2014 72B parameters, competes with the best open models available. Needs ~45 GB RAM/VRAM. About 47 GB download.",
+      "command": "ollama pull qwen2.5:72b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5",
+        "72b",
+        "flagship",
+        "alibaba",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25-coder",
+      "title": "Download Qwen 2.5 Coder 7B",
+      "description": "Alibaba's code-specialised Qwen 2.5 \u2014 one of the best coding models at the 7B size. Excellent for code completion, debugging, and code review. About 4.7 GB.",
+      "command": "ollama pull qwen2.5-coder",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5-coder",
+        "code",
+        "coding",
+        "alibaba",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwen25-coder-32b",
+      "title": "Download Qwen 2.5 Coder 32B",
+      "description": "The large version of Qwen 2.5 Coder \u2014 among the very best open-source coding models. Rivals GitHub Copilot and CodeLlama at much larger scale. About 20 GB.",
+      "command": "ollama pull qwen2.5-coder:32b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwen2.5-coder",
+        "32b",
+        "code",
+        "best",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-qwq",
+      "title": "Download QwQ 32B (reasoning model)",
+      "description": "Alibaba's reasoning model \u2014 thinks step by step before answering, similar to OpenAI o1. Excellent for math, logic, and complex problem solving. Takes longer but gives more accurate answers. About 20 GB.",
+      "command": "ollama pull qwq",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "qwq",
+        "reasoning",
+        "think",
+        "math",
+        "logic",
+        "alibaba",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-deepseek-r1",
+      "title": "Download DeepSeek R1 (reasoning)",
+      "description": "DeepSeek's open reasoning model \u2014 trained with reinforcement learning to think step by step. Competitive with OpenAI o1 on math and coding benchmarks. Available in sizes from 1.5B to 671B.",
+      "command": "ollama pull deepseek-r1",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "deepseek-r1",
+        "reasoning",
+        "think",
+        "math",
+        "download",
+        "r1"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-deepseek-r1-70b",
+      "title": "Download DeepSeek R1 70B",
+      "description": "The 70B version of DeepSeek R1 reasoning model \u2014 very strong at complex reasoning, maths and code. Needs ~45 GB RAM. One of the best open reasoning models available.",
+      "command": "ollama pull deepseek-r1:70b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "deepseek-r1",
+        "70b",
+        "reasoning",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-deepseek-v3",
+      "title": "Download DeepSeek V3 (671B MoE)",
+      "description": "DeepSeek's massive mixture-of-experts model \u2014 671B total parameters, 37B active. Matches GPT-4o on many benchmarks. Requires very powerful hardware (multiple GPUs).",
+      "command": "ollama pull deepseek-v3",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "deepseek-v3",
+        "671b",
+        "moe",
+        "large",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-deepseek-v2",
+      "title": "Download DeepSeek V2 Lite",
+      "description": "A lighter version of DeepSeek's V2 architecture \u2014 good coding and reasoning at a manageable size. About 9 GB.",
+      "command": "ollama pull deepseek-v2",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "deepseek-v2",
+        "deepseek",
+        "download",
+        "coding"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-gemma2-9b",
+      "title": "Download Gemma 2 9B (Google)",
+      "description": "Google's Gemma 2 at 9B \u2014 much better than Gemma 2B, competitive with larger models. Good all-rounder for chat and coding. About 5.4 GB.",
+      "command": "ollama pull gemma2:9b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "gemma2",
+        "9b",
+        "google",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-gemma2-27b",
+      "title": "Download Gemma 2 27B (Google)",
+      "description": "Google's largest Gemma 2 model \u2014 27B parameters, strong performance across reasoning, coding and chat. About 16 GB.",
+      "command": "ollama pull gemma2:27b",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "gemma2",
+        "27b",
+        "google",
+        "large",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-gemma3",
+      "title": "Download Gemma 3 (latest Google)",
+      "description": "Google's newest Gemma 3 model \u2014 multimodal capable, 128k context, improved reasoning over Gemma 2. Available in 1B, 4B, 12B and 27B sizes.",
+      "command": "ollama pull gemma3",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "gemma3",
+        "google",
+        "latest",
+        "multimodal",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-codegemma",
+      "title": "Download CodeGemma (Google coding)",
+      "description": "Google's code-specialised Gemma model \u2014 fine-tuned for code generation, completion and review. Based on Gemma 7B. About 5.0 GB.",
+      "command": "ollama pull codegemma",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "codegemma",
+        "google",
+        "code",
+        "coding",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-phi35",
+      "title": "Download Phi-3.5 Mini",
+      "description": "Microsoft's updated Phi-3.5 Mini \u2014 3.8B parameters with improved instruction following and reasoning. Very fast, great for constrained hardware. About 2.2 GB.",
+      "command": "ollama pull phi3.5",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "phi3.5",
+        "phi",
+        "microsoft",
+        "small",
+        "fast",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-phi4",
+      "title": "Download Phi-4 14B (Microsoft)",
+      "description": "Microsoft's Phi-4 \u2014 14B model trained heavily on synthetic high-quality data. Punches well above its weight on reasoning and STEM tasks. About 8.9 GB.",
+      "command": "ollama pull phi4",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "phi4",
+        "phi",
+        "microsoft",
+        "14b",
+        "reasoning",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-command-r",
+      "title": "Download Command R (Cohere)",
+      "description": "Cohere's Command R \u2014 35B model optimised for RAG (Retrieval-Augmented Generation) and tool use. Excellent at following complex multi-step instructions. About 20 GB.",
+      "command": "ollama pull command-r",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "command-r",
+        "cohere",
+        "rag",
+        "tool",
+        "35b",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-command-r-plus",
+      "title": "Download Command R+ (Cohere flagship)",
+      "description": "Cohere's flagship 104B model \u2014 state-of-the-art for enterprise RAG, tool calling and complex reasoning. Requires significant hardware. About 59 GB.",
+      "command": "ollama pull command-r-plus",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "command-r-plus",
+        "cohere",
+        "104b",
+        "flagship",
+        "rag",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-dolphin-llama3",
+      "title": "Download Dolphin Llama 3 (uncensored)",
+      "description": "Dolphin is an uncensored fine-tune of Llama 3 by Eric Hartford. Fewer refusals, useful for creative writing, roleplay, research, and tasks the base model declines. About 4.7 GB.",
+      "command": "ollama pull dolphin-llama3",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "dolphin",
+        "llama3",
+        "uncensored",
+        "creative",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-dolphin-mixtral",
+      "title": "Download Dolphin Mixtral (uncensored MoE)",
+      "description": "Uncensored Dolphin fine-tune on Mixtral 8x7B \u2014 powerful, capable and without content filters. Good for creative writing and unrestricted research. About 26 GB.",
+      "command": "ollama pull dolphin-mixtral",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "dolphin",
+        "mixtral",
+        "uncensored",
+        "moe",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-starcoder2",
+      "title": "Download StarCoder2 (coding)",
+      "description": "BigCode's StarCoder2 \u2014 trained on 600+ programming languages. Available in 3B, 7B and 15B sizes. Excellent for code completion and generation. About 4.0 GB for 7B.",
+      "command": "ollama pull starcoder2",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "starcoder2",
+        "code",
+        "programming",
+        "bigcode",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-granite-code",
+      "title": "Download Granite Code (IBM)",
+      "description": "IBM's Granite Code models \u2014 trained specifically for enterprise software development, code explanation, bug fixing, and documentation. Available in 3B, 8B, 20B, 34B sizes.",
+      "command": "ollama pull granite-code",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "granite",
+        "ibm",
+        "code",
+        "enterprise",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-smollm2",
+      "title": "Download SmolLM2 (tiny, 135M\u20131.7B)",
+      "description": "HuggingFace's ultra-small model family \u2014 from 135M to 1.7B parameters. Runs on anything including Raspberry Pi and microcontrollers. Good for on-device inference.",
+      "command": "ollama pull smollm2",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "smollm2",
+        "tiny",
+        "small",
+        "edge",
+        "huggingface",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-moondream",
+      "title": "Download Moondream 2 (tiny vision)",
+      "description": "A tiny but capable vision model \u2014 only 1.9B parameters but can describe images, answer questions about them, and do OCR. Great for edge devices. About 1.7 GB.",
+      "command": "ollama pull moondream",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "moondream",
+        "vision",
+        "tiny",
+        "image",
+        "small",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-solar",
+      "title": "Download Solar 10.7B (Upstage)",
+      "description": "Upstage's Solar \u2014 a well-performing 10.7B model, consistently high on open LLM benchmarks. Good general purpose model that fits on most hardware. About 6.1 GB.",
+      "command": "ollama pull solar",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "solar",
+        "upstage",
+        "10b",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-nous-hermes2",
+      "title": "Download Nous Hermes 2",
+      "description": "Nous Research's Hermes 2 fine-tune \u2014 excellent at following complex instructions, roleplay, and structured outputs like JSON. Available on Mixtral and other bases.",
+      "command": "ollama pull nous-hermes2",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "nous",
+        "hermes2",
+        "instruction",
+        "json",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-openhermes",
+      "title": "Download OpenHermes 2.5",
+      "description": "A widely-used Mistral 7B fine-tune focused on instruction following and chat. Great quality for its small size. One of the most popular community models.",
+      "command": "ollama pull openhermes",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "openhermes",
+        "mistral",
+        "instruction",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-wizardlm2",
+      "title": "Download WizardLM 2",
+      "description": "Microsoft WizardLM 2 \u2014 strong at complex reasoning, multilingual tasks, and following nuanced instructions. Available in 7B and 8x22B sizes.",
+      "command": "ollama pull wizardlm2",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "wizardlm2",
+        "wizard",
+        "microsoft",
+        "reasoning",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-orca-mini",
+      "title": "Download Orca Mini 3B",
+      "description": "A compact 3B model fine-tuned with explanation data \u2014 good at step-by-step reasoning for its small size. Useful on low-spec hardware.",
+      "command": "ollama pull orca-mini",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "orca",
+        "mini",
+        "3b",
+        "small",
+        "reasoning",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-yi",
+      "title": "Download Yi 1.5 (01.AI)",
+      "description": "01.AI's Yi 1.5 models \u2014 strong multilingual performance especially in Chinese and English. Available in 6B, 9B and 34B sizes.",
+      "command": "ollama pull yi",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "yi",
+        "01ai",
+        "multilingual",
+        "chinese",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-aya",
+      "title": "Download Aya Expanse (multilingual)",
+      "description": "Cohere's Aya Expanse \u2014 specifically trained to be excellent in 23+ languages. The best open model for non-English conversations and translation tasks.",
+      "command": "ollama pull aya-expanse",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "aya",
+        "expanse",
+        "multilingual",
+        "cohere",
+        "translation",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-llama-guard",
+      "title": "Download Llama Guard (safety classifier)",
+      "description": "Meta's safety model \u2014 classifies whether text contains unsafe content. Use it to add content moderation to your AI applications. Not a chat model.",
+      "command": "ollama pull llama-guard3",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "llama-guard",
+        "safety",
+        "moderation",
+        "classify",
+        "meta",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-mxbai-embed",
+      "title": "Download MXBai Embed Large (embeddings)",
+      "description": "MixedBread's high-quality embedding model \u2014 one of the best open-source models for semantic search and RAG. Outperforms OpenAI's ada-002 on many benchmarks.",
+      "command": "ollama pull mxbai-embed-large",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "mxbai",
+        "embed",
+        "embeddings",
+        "rag",
+        "semantic",
+        "search",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pull-all-minilm",
+      "title": "Download all-minilm (fast embeddings)",
+      "description": "A very small, very fast embedding model \u2014 great when you need to embed thousands of texts quickly and accuracy is less critical than speed.",
+      "command": "ollama pull all-minilm",
+      "category": "AI & Ollama",
+      "keywords": [
+        "ollama",
+        "minilm",
+        "embed",
+        "embeddings",
+        "fast",
+        "small",
+        "download"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-claude-install",
+      "title": "Install Claude Code CLI (Anthropic)",
+      "description": "Installs Claude Code \u2014 Anthropic's official AI coding assistant for the terminal. Gives you a full AI pair programmer that can read, write and edit files, run commands, and understand your entire codebase.",
+      "command": "npm install -g @anthropic-ai/claude-code",
+      "category": "AI & Ollama",
+      "keywords": [
+        "claude",
+        "anthropic",
+        "claude-code",
+        "install",
+        "ai",
+        "coding",
+        "cli",
+        "npm"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-claude-run",
+      "title": "Start Claude Code session",
+      "description": "Launches an interactive Claude Code session in the current directory. Claude can see all your files and help you write code, fix bugs, refactor, write tests and more. Type /help inside for all commands.",
+      "command": "claude",
+      "category": "AI & Ollama",
+      "keywords": [
+        "claude",
+        "anthropic",
+        "start",
+        "session",
+        "ai",
+        "coding",
+        "interactive"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Run this in your project directory so Claude can see your code."
+    },
+    {
+      "id": "ai-tool-claude-oneshot",
+      "title": "Ask Claude Code a one-shot question",
+      "description": "Runs Claude with a single prompt and exits \u2014 no interactive session. Useful for quick questions or piping into scripts. Example: claude -p 'what does this repo do?'",
+      "command": "claude -p \"Explain what this codebase does in 3 bullet points\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "claude",
+        "anthropic",
+        "prompt",
+        "oneshot",
+        "question",
+        "ai",
+        "cli"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the prompt with your question and run in your project directory."
+    },
+    {
+      "id": "ai-tool-claude-update",
+      "title": "Update Claude Code to latest version",
+      "description": "Updates the Claude Code CLI to the latest version using npm.",
+      "command": "npm update -g @anthropic-ai/claude-code",
+      "category": "AI & Ollama",
+      "keywords": [
+        "claude",
+        "anthropic",
+        "update",
+        "upgrade",
+        "claude-code",
+        "npm"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-gemini-install",
+      "title": "Install Gemini CLI (Google)",
+      "description": "Installs Google's Gemini CLI \u2014 an AI assistant in your terminal powered by Gemini. Can answer questions, analyse files, and help with coding tasks using your free Google account.",
+      "command": "npm install -g @google/gemini-cli",
+      "category": "AI & Ollama",
+      "keywords": [
+        "gemini",
+        "google",
+        "install",
+        "cli",
+        "ai",
+        "npm",
+        "terminal"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-gemini-run",
+      "title": "Start Gemini CLI session",
+      "description": "Launches an interactive Gemini session. On first run it will ask you to log in with your Google account. Free tier includes generous usage limits.",
+      "command": "gemini",
+      "category": "AI & Ollama",
+      "keywords": [
+        "gemini",
+        "google",
+        "start",
+        "session",
+        "ai",
+        "interactive"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Interactive session \u2014 run in your terminal."
+    },
+    {
+      "id": "ai-tool-llm-install",
+      "title": "Install llm CLI (universal AI tool)",
+      "description": "Installs Simon Willison's 'llm' \u2014 a command-line tool that works with OpenAI, Anthropic, Google, Ollama, and dozens of other AI providers through a single unified interface.",
+      "command": "pip install llm",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llm",
+        "install",
+        "cli",
+        "universal",
+        "openai",
+        "anthropic",
+        "ollama",
+        "pip"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-llm-ollama",
+      "title": "Add Ollama models to llm CLI",
+      "description": "Installs the Ollama plugin for the llm CLI, letting you use any locally installed Ollama model through the llm command.",
+      "command": "llm install llm-ollama",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llm",
+        "ollama",
+        "plugin",
+        "install",
+        "cli"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-llm-prompt",
+      "title": "Send a prompt via llm CLI",
+      "description": "Sends a prompt to the default AI model and prints the response. Set your default with: llm models default. Works with any configured provider.",
+      "command": "llm \"Explain what a Linux inode is\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llm",
+        "prompt",
+        "ask",
+        "cli",
+        "ai",
+        "question"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the prompt with your question."
+    },
+    {
+      "id": "ai-tool-llm-models",
+      "title": "List available llm CLI models",
+      "description": "Lists all AI models available through the llm CLI, including local Ollama models and any cloud providers you've configured with API keys.",
+      "command": "llm models",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llm",
+        "models",
+        "list",
+        "available",
+        "cli"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-llm-key",
+      "title": "Set API key for llm CLI",
+      "description": "Stores an API key for a provider (OpenAI, Anthropic, etc.) in the llm keychain. Replace 'openai' with any supported provider name.",
+      "command": "llm keys set openai",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llm",
+        "api",
+        "key",
+        "openai",
+        "anthropic",
+        "configure",
+        "cli"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Interactive \u2014 run in terminal with your API key ready."
+    },
+    {
+      "id": "ai-tool-aider-install",
+      "title": "Install Aider (AI pair programmer)",
+      "description": "Installs Aider \u2014 an AI coding assistant that works directly with your git repo. It can write code, fix bugs, and make multi-file edits based on your instructions, then commits the changes.",
+      "command": "pip install aider-chat",
+      "category": "AI & Ollama",
+      "keywords": [
+        "aider",
+        "install",
+        "ai",
+        "coding",
+        "git",
+        "pair",
+        "programmer",
+        "pip"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-aider-ollama",
+      "title": "Start Aider with local Ollama model",
+      "description": "Launches Aider using a local Ollama model instead of a cloud API. No API costs. Replace 'ollama/llama3.1' with any model from your ollama list.",
+      "command": "aider --model ollama/llama3.1",
+      "category": "AI & Ollama",
+      "keywords": [
+        "aider",
+        "ollama",
+        "local",
+        "model",
+        "start",
+        "coding",
+        "free"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Run in your project directory. Replace model name as needed."
+    },
+    {
+      "id": "ai-tool-aider-claude",
+      "title": "Start Aider with Claude Sonnet",
+      "description": "Launches Aider using Anthropic's Claude Sonnet \u2014 the best model for coding tasks. Requires ANTHROPIC_API_KEY environment variable to be set.",
+      "command": "aider --model claude-sonnet-4-5",
+      "category": "AI & Ollama",
+      "keywords": [
+        "aider",
+        "claude",
+        "anthropic",
+        "sonnet",
+        "coding",
+        "start"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Requires ANTHROPIC_API_KEY. Run in your project directory."
+    },
+    {
+      "id": "ai-tool-aider-gpt4",
+      "title": "Start Aider with GPT-4o",
+      "description": "Launches Aider using OpenAI's GPT-4o. Requires OPENAI_API_KEY environment variable to be set.",
+      "command": "aider --model gpt-4o",
+      "category": "AI & Ollama",
+      "keywords": [
+        "aider",
+        "openai",
+        "gpt4",
+        "gpt-4o",
+        "coding",
+        "start"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Requires OPENAI_API_KEY. Run in your project directory."
+    },
+    {
+      "id": "ai-tool-openwebui-docker",
+      "title": "Install Open WebUI (ChatGPT-style UI for Ollama)",
+      "description": "Runs Open WebUI \u2014 a beautiful ChatGPT-like web interface for your local Ollama models. Accessible at http://localhost:3000. Includes chat history, model switching, and RAG.",
+      "command": "docker run -d -p 3000:8080 --add-host=host.docker.internal:host-gateway -v open-webui:/app/backend/data --name open-webui ghcr.io/open-webui/open-webui:main",
+      "category": "AI & Ollama",
+      "keywords": [
+        "openwebui",
+        "open-webui",
+        "docker",
+        "ui",
+        "interface",
+        "ollama",
+        "chatgpt",
+        "install"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-openwebui-pip",
+      "title": "Install Open WebUI via pip",
+      "description": "Installs Open WebUI without Docker using pip. Then run 'open-webui serve' to start it. Accessible at http://localhost:8080.",
+      "command": "pip install open-webui",
+      "category": "AI & Ollama",
+      "keywords": [
+        "openwebui",
+        "pip",
+        "install",
+        "ui",
+        "ollama",
+        "interface"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-openwebui-start",
+      "title": "Start Open WebUI server",
+      "description": "Starts the Open WebUI server after pip installation. Opens a ChatGPT-like interface for your local Ollama models at http://localhost:8080.",
+      "command": "open-webui serve",
+      "category": "AI & Ollama",
+      "keywords": [
+        "openwebui",
+        "start",
+        "serve",
+        "run",
+        "ui",
+        "ollama"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-fabric-install",
+      "title": "Install Fabric (AI pattern tool)",
+      "description": "Installs Fabric by Daniel Miessler \u2014 a tool for augmenting humans with AI using reusable 'patterns' (prompts). Pipe any text through AI patterns like 'summarise', 'extract wisdom', 'write essay', etc.",
+      "command": "pip install fabric-ai",
+      "category": "AI & Ollama",
+      "keywords": [
+        "fabric",
+        "install",
+        "ai",
+        "pattern",
+        "augment",
+        "pip",
+        "daniel",
+        "miessler"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-fabric-setup",
+      "title": "Set up Fabric with API keys",
+      "description": "Runs Fabric's initial setup to configure your AI provider API keys and default model. Run this once after installing.",
+      "command": "fabric --setup",
+      "category": "AI & Ollama",
+      "keywords": [
+        "fabric",
+        "setup",
+        "configure",
+        "api",
+        "key",
+        "model"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Interactive setup \u2014 run in terminal with your API keys ready."
+    },
+    {
+      "id": "ai-tool-fabric-use",
+      "title": "Pipe text through a Fabric AI pattern",
+      "description": "Pipes text through a Fabric pattern. 'extract_wisdom' pulls key insights from articles or videos. Other patterns: summarize, write_essay, explain_code, create_story. Pipe any text in.",
+      "command": "echo 'Your article or text here' | fabric --pattern extract_wisdom",
+      "category": "AI & Ollama",
+      "keywords": [
+        "fabric",
+        "pattern",
+        "pipe",
+        "ai",
+        "extract",
+        "wisdom",
+        "summarize"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the text or pipe a file: cat article.txt | fabric --pattern summarize"
+    },
+    {
+      "id": "ai-tool-fabric-list",
+      "title": "List all Fabric patterns",
+      "description": "Lists all available Fabric AI patterns. There are 100+ patterns for summarising, writing, coding, security analysis, and much more.",
+      "command": "fabric --list",
+      "category": "AI & Ollama",
+      "keywords": [
+        "fabric",
+        "list",
+        "patterns",
+        "available",
+        "ai"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-sgpt-install",
+      "title": "Install Shell-GPT (AI in your shell)",
+      "description": "Installs Shell-GPT (sgpt) \u2014 brings AI directly into your shell. Ask it to generate shell commands, explain commands, or have a chat, all without leaving the terminal.",
+      "command": "pip install shell-gpt",
+      "category": "AI & Ollama",
+      "keywords": [
+        "sgpt",
+        "shell-gpt",
+        "install",
+        "ai",
+        "shell",
+        "terminal",
+        "pip"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-sgpt-cmd",
+      "title": "Generate a shell command with AI",
+      "description": "Asks Shell-GPT to generate a shell command for a task in plain English. Add --execute to run it immediately. Great for commands you can't quite remember.",
+      "command": "sgpt --shell \"find all python files modified in the last 7 days\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "sgpt",
+        "shell",
+        "command",
+        "generate",
+        "ai",
+        "natural",
+        "language"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the description with what you want to do."
+    },
+    {
+      "id": "ai-tool-sgpt-explain",
+      "title": "Explain a command with AI",
+      "description": "Pipes a command into Shell-GPT to get a plain-English explanation of what it does. Useful for understanding complex one-liners or unfamiliar commands.",
+      "command": "echo 'find . -name \"*.log\" -mtime +7 -exec rm {} \\;' | sgpt --explain",
+      "category": "AI & Ollama",
+      "keywords": [
+        "sgpt",
+        "explain",
+        "command",
+        "ai",
+        "understand",
+        "shell"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the command string with the one you want explained."
+    },
+    {
+      "id": "ai-tool-sgpt-ollama",
+      "title": "Use Shell-GPT with local Ollama",
+      "description": "Configures Shell-GPT to use a local Ollama model instead of OpenAI. Set these environment variables before running sgpt.",
+      "command": "export OPENAI_API_KEY=ollama && export OPENAI_API_BASE=http://localhost:11434/v1 && sgpt --model llama3 \"Hello\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "sgpt",
+        "ollama",
+        "local",
+        "configure",
+        "env",
+        "free"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Set the env vars in your .bashrc for persistence, then run sgpt normally."
+    },
+    {
+      "id": "ai-tool-anythingllm",
+      "title": "Install AnythingLLM (local RAG system)",
+      "description": "AnythingLLM is an all-in-one local AI app \u2014 RAG (chat with your documents), multiple users, multiple AI providers including Ollama. Download the Linux AppImage from the official site.",
+      "command": "wget -O AnythingLLM.AppImage 'https://cdn.useanything.com/latest/AnythingLLMDesktop.AppImage' && chmod +x AnythingLLM.AppImage && ./AnythingLLM.AppImage",
+      "category": "AI & Ollama",
+      "keywords": [
+        "anythingllm",
+        "rag",
+        "documents",
+        "install",
+        "local",
+        "ollama",
+        "appimage"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Downloads and launches the app \u2014 run in your terminal."
+    },
+    {
+      "id": "ai-tool-groq-install",
+      "title": "Install Groq Python client",
+      "description": "Installs the Groq Python library. Groq provides extremely fast cloud inference (often 500+ tokens/second) for open models like Llama 3, Mixtral. Free tier available.",
+      "command": "pip install groq",
+      "category": "AI & Ollama",
+      "keywords": [
+        "groq",
+        "install",
+        "pip",
+        "fast",
+        "inference",
+        "cloud",
+        "llama",
+        "mixtral"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-groq-test",
+      "title": "Test Groq API (fastest LLM inference)",
+      "description": "Sends a test message to the Groq API. Groq uses custom LPU hardware for extremely fast inference \u2014 often 10x faster than GPU. Get your free API key at console.groq.com.",
+      "command": "python3 -c \"\nfrom groq import Groq\nclient = Groq()\nresponse = client.chat.completions.create(\n    model='llama-3.1-8b-instant',\n    messages=[{'role': 'user', 'content': 'Hello!'}]\n)\nprint(response.choices[0].message.content)\n\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "groq",
+        "api",
+        "test",
+        "fast",
+        "llama",
+        "inference",
+        "python"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Requires GROQ_API_KEY environment variable. Get it free at console.groq.com"
+    },
+    {
+      "id": "ai-tool-copilot-cli-install",
+      "title": "Install GitHub Copilot in CLI",
+      "description": "Installs the GitHub Copilot extension for the GitHub CLI. Lets you ask Copilot to explain commands, suggest shell commands, and answer questions right in the terminal.",
+      "command": "gh extension install github/gh-copilot",
+      "category": "AI & Ollama",
+      "keywords": [
+        "copilot",
+        "github",
+        "cli",
+        "install",
+        "gh",
+        "extension",
+        "ai"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-tool-copilot-suggest",
+      "title": "Ask GitHub Copilot to suggest a command",
+      "description": "Asks GitHub Copilot in the CLI to suggest a shell command for a task in plain English. It will explain what the command does and ask before running it.",
+      "command": "gh copilot suggest \"undo the last git commit without losing my changes\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "copilot",
+        "github",
+        "suggest",
+        "command",
+        "ai",
+        "cli",
+        "gh"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the description with your task. Requires GitHub Copilot subscription."
+    },
+    {
+      "id": "ai-tool-copilot-explain",
+      "title": "Ask GitHub Copilot to explain a command",
+      "description": "Asks Copilot in the CLI to explain what a command does in plain English.",
+      "command": "gh copilot explain \"git rebase -i HEAD~3\"",
+      "category": "AI & Ollama",
+      "keywords": [
+        "copilot",
+        "github",
+        "explain",
+        "command",
+        "ai",
+        "cli",
+        "gh"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace the command with the one you want explained."
+    },
+    {
+      "id": "ai-api-openai-key",
+      "title": "Set OpenAI API key (permanent)",
+      "description": "Adds your OpenAI API key to your shell profile so it's available in every session. Replace sk-... with your actual key from platform.openai.com.",
+      "command": "echo 'export OPENAI_API_KEY=\"sk-your-key-here\"' >> ~/.bashrc && source ~/.bashrc",
+      "category": "AI & Ollama",
+      "keywords": [
+        "openai",
+        "api",
+        "key",
+        "set",
+        "export",
+        "bashrc",
+        "configure"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace sk-your-key-here with your actual OpenAI API key."
+    },
+    {
+      "id": "ai-api-anthropic-key",
+      "title": "Set Anthropic API key (permanent)",
+      "description": "Adds your Anthropic API key to your shell profile so Claude is available in every session. Get your key at console.anthropic.com.",
+      "command": "echo 'export ANTHROPIC_API_KEY=\"sk-ant-your-key-here\"' >> ~/.bashrc && source ~/.bashrc",
+      "category": "AI & Ollama",
+      "keywords": [
+        "anthropic",
+        "claude",
+        "api",
+        "key",
+        "set",
+        "export",
+        "bashrc",
+        "configure"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace with your actual Anthropic API key from console.anthropic.com"
+    },
+    {
+      "id": "ai-api-gemini-key",
+      "title": "Set Gemini API key (permanent)",
+      "description": "Adds your Google Gemini API key to your shell profile. Get a free key at aistudio.google.com. Very generous free tier with fast Gemini Flash model.",
+      "command": "echo 'export GEMINI_API_KEY=\"your-key-here\"' >> ~/.bashrc && source ~/.bashrc",
+      "category": "AI & Ollama",
+      "keywords": [
+        "gemini",
+        "google",
+        "api",
+        "key",
+        "set",
+        "export",
+        "bashrc",
+        "configure"
+      ],
+      "can_run": false,
+      "shell_only_reason": "Replace with your actual Gemini API key from aistudio.google.com"
+    },
+    {
+      "id": "ai-pip-chromadb",
+      "title": "Install ChromaDB (local vector database)",
+      "description": "Installs ChromaDB \u2014 the most popular local vector database for RAG (Retrieval-Augmented Generation) systems. Store and query embeddings to let AI chat with your documents.",
+      "command": "pip install chromadb",
+      "category": "AI & Ollama",
+      "keywords": [
+        "chromadb",
+        "vector",
+        "database",
+        "rag",
+        "embeddings",
+        "install",
+        "pip"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pip-faiss",
+      "title": "Install FAISS (fast vector search)",
+      "description": "Installs Facebook's FAISS \u2014 extremely fast similarity search for vector embeddings. Used in large-scale RAG systems and semantic search. CPU version.",
+      "command": "pip install faiss-cpu",
+      "category": "AI & Ollama",
+      "keywords": [
+        "faiss",
+        "vector",
+        "search",
+        "facebook",
+        "embeddings",
+        "rag",
+        "install",
+        "pip"
+      ],
+      "can_run": true
+    },
+    {
+      "id": "ai-pip-llamaindex",
+      "title": "Install LlamaIndex (RAG framework)",
+      "description": "Installs LlamaIndex \u2014 a framework for building RAG applications. Connect AI to your PDFs, databases, APIs, and any data source. Works with Ollama and all major providers.",
+      "command": "pip install llama-index",
+      "category": "AI & Ollama",
+      "keywords": [
+        "llamaindex",
+        "llama-index",
+        "rag",
+        "framework",
+        "install",
+        "pip",
+        "documents"
+      ],
+      "can_run": true
     }
   ]
 }
