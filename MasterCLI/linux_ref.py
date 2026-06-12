@@ -13,7 +13,6 @@ try:
         Button, Input, Static, RichLog, DataTable,
         TabbedContent, TabPane, Rule
     )
-    from textual.screen import ModalScreen
     from textual.binding import Binding
     from textual._work_decorator import work
     from rich.text import Text
@@ -264,37 +263,6 @@ def run_command(cmd: str):
     except Exception as e:
         return "", str(e), 1
 
-# ── Output modal ──────────────────────────────────────────────────────────────
-
-class OutputModal(ModalScreen):
-    def __init__(self, title, stdout, stderr, rc):
-        super().__init__()
-        self._title = title
-        self._out   = stdout
-        self._err   = stderr
-        self._rc    = rc
-
-    def compose(self) -> ComposeResult:
-        with Container(classes="modal-box"):
-            yield Label(f"▶  {self._title}", classes="modal-title")
-            yield RichLog(classes="modal-log", highlight=True, wrap=True)
-            yield Label("Press  ESC  or  Q  to close", classes="modal-hint")
-
-    def on_mount(self) -> None:
-        log = self.query_one(RichLog)
-        if self._out:
-            log.write(Text(self._out.rstrip()))
-        if self._err:
-            log.write(Text(self._err.rstrip(), style="bold red"))
-        if not self._out and not self._err:
-            style = "bold green" if self._rc == 0 else "bold red"
-            msg   = "✓  Command completed." if self._rc == 0 else f"✗  Exited with code {self._rc}"
-            log.write(Text(msg, style=style))
-
-    def on_key(self, event) -> None:
-        if event.key in ("escape", "q"):
-            self.dismiss()
-
 # ── Command detail (right panel) ──────────────────────────────────────────────
 
 class CommandDetail(Vertical):
@@ -352,7 +320,18 @@ class CommandDetail(Vertical):
     def _show_result(self, btn: Button, title: str, out: str, err: str, rc: int) -> None:
         btn.disabled = False
         btn.label = "▶   Run it"
-        self.app.push_screen(OutputModal(title, out, err, rc))
+        log = self.app.query_one("#terminal-log", RichLog)
+        dash = "─" * max(0, 54 - len(title))
+        log.write(Text(f"  ▶  {title}  {dash}", style="bold cyan"))
+        if out:
+            log.write(Text(out.rstrip()))
+        if err:
+            log.write(Text(err.rstrip(), style="bold red"))
+        if not out and not err:
+            style = "bold green" if rc == 0 else "bold red"
+            log.write(Text("  ✓  Done." if rc == 0 else f"  ✗  Exited with code {rc}", style=style))
+        log.write(Text(""))
+        log.scroll_end(animate=False)
 
 # ── Main App ──────────────────────────────────────────────────────────────────
 
@@ -398,11 +377,44 @@ class DeamonCLIApp(App):
         width: 1fr;
     }
 
-    /* ── Right panel ── */
-    #right {
+    /* ── Right panel (split: detail top, terminal bottom) ── */
+    #right-pane {
         width: 1fr;
+        layout: vertical;
+    }
+    #detail-panel {
+        height: 45%;
         padding: 2 3;
         background: $background;
+        border-bottom: solid $primary-darken-2;
+    }
+    #output-header {
+        height: 1;
+        background: $panel;
+        align: left middle;
+    }
+    #output-label {
+        width: 1fr;
+        color: $text-muted;
+        padding: 0 2;
+    }
+    #clear-output-btn {
+        min-width: 10;
+        height: 1;
+        padding: 0 1;
+        border: none;
+        background: transparent;
+        color: $text-muted;
+    }
+    #clear-output-btn:hover {
+        background: $error-darken-3;
+        color: $error;
+    }
+    #terminal-log {
+        height: 1fr;
+        background: $surface;
+        padding: 0 1;
+        border: none;
     }
 
     /* ── Welcome ── */
@@ -487,32 +499,10 @@ class DeamonCLIApp(App):
         background: $error-darken-3;
     }
 
-    /* ── Output modal ── */
-    .modal-box {
-        background: $panel;
-        border: round $primary;
-        width: 82%;
-        height: 72%;
-        padding: 1 2;
-    }
-    .modal-title {
-        text-style: bold;
-        margin-bottom: 1;
-    }
-    .modal-log {
-        height: 1fr;
-        border: round $surface;
-    }
-    .modal-hint {
-        color: $text-muted;
-        text-align: center;
-        margin-top: 1;
-    }
     """
 
     BINDINGS = [
         Binding("ctrl+q", "quit", "Quit"),
-        Binding("escape", "dismiss_modal", "Close", show=False),
     ]
 
     def __init__(self):
@@ -540,10 +530,19 @@ class DeamonCLIApp(App):
                         yield DataTable(id="history-table", cursor_type="row")
                         yield Button("🗑  Clear history", id="hist-clear-btn", variant="error")
 
-            with ScrollableContainer(id="right"):
-                yield self._welcome_widget()
+            with Vertical(id="right-pane"):
+                with ScrollableContainer(id="detail-panel"):
+                    yield self._welcome_widget()
+                with Horizontal(id="output-header"):
+                    yield Label("── Output ──", id="output-label")
+                    yield Button("🗑  Clear", id="clear-output-btn")
+                yield RichLog(id="terminal-log", highlight=True, wrap=True)
 
         yield Footer()
+
+    def on_mount(self) -> None:
+        log = self.query_one("#terminal-log", RichLog)
+        log.write(Text("  Run a command above — output will appear here.", style="dim"))
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -634,10 +633,8 @@ class DeamonCLIApp(App):
             inp.value = query   # triggers on_input_changed automatically
 
     def _show_detail(self, cmd: dict):
-        panel = self.query_one("#right", ScrollableContainer)
+        panel = self.query_one("#detail-panel", ScrollableContainer)
         panel.remove_children()
-        # Use call_after_refresh so the DOM removal completes before mounting
-        # the new widget — prevents duplicate-ID crashes when clicking fast.
         self.call_after_refresh(lambda c=cmd: panel.mount(CommandDetail(c, self._hcon)))
 
     # ── History tab ───────────────────────────────────────────────────────────
@@ -674,12 +671,10 @@ class DeamonCLIApp(App):
             self._hcon.commit()
             self._load_history_table()
             self.notify("History cleared.")
-
-    # ── Misc ──────────────────────────────────────────────────────────────────
-
-    def action_dismiss_modal(self):
-        if self.screen_stack and len(self.screen_stack) > 1:
-            self.pop_screen()
+            return
+        if event.button.id == "clear-output-btn":
+            self.query_one("#terminal-log", RichLog).clear()
+            return
 
     def on_unmount(self):
         self._hcon.close()
