@@ -20,12 +20,23 @@ except (ValueError, ImportError):
         print("AppIndicator not available — tray icon won't show.", file=sys.stderr)
         sys.exit(1)
 
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk
 
-COUNTDOWN_SECONDS = 5
+def _session_env():
+    """Build an environment that includes the user's DBUS session bus,
+    which gnome-terminal needs to launch correctly from a background process."""
+    env = {**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":0")}
+    if "DBUS_SESSION_BUS_ADDRESS" not in env:
+        uid = os.getuid()
+        bus_path = f"/run/user/{uid}/bus"
+        if os.path.exists(bus_path):
+            env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus_path}"
+    if "XDG_RUNTIME_DIR" not in env:
+        env["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
+    return env
 
 def open_app(_=None):
-    env = {**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":0")}
+    env = _session_env()
     if shutil.which("wmctrl"):
         r = subprocess.run(["wmctrl", "-a", "DeamonCLI"], capture_output=True, env=env)
         if r.returncode == 0:
@@ -63,76 +74,30 @@ def do_uninstall():
             shutil.rmtree(p, ignore_errors=True)
         elif p.exists():
             p.unlink(missing_ok=True)
-    subprocess.call(["update-desktop-database",
-                     str(home / ".local/share/applications")],
-                    stderr=subprocess.DEVNULL)
+    subprocess.call(
+        ["update-desktop-database", str(home / ".local/share/applications")],
+        stderr=subprocess.DEVNULL,
+    )
     Gtk.main_quit()
 
 def uninstall_cb(_=None):
-    dialog = Gtk.Dialog(title="Uninstall DeamonCLI")
-    dialog.set_default_size(360, -1)
-    dialog.set_border_width(16)
+    dialog = Gtk.MessageDialog(
+        message_type=Gtk.MessageType.WARNING,
+        buttons=Gtk.ButtonsType.NONE,
+        text="Uninstall DeamonCLI?",
+        secondary_text=(
+            "This will remove all app files, the desktop shortcut,\n"
+            "the tray icon, and the launcher from your system."
+        ),
+    )
+    dialog.set_title("Uninstall DeamonCLI")
     dialog.set_keep_above(True)
-
-    # Content
-    box = dialog.get_content_area()
-    box.set_spacing(12)
-
-    title_label = Gtk.Label()
-    title_label.set_markup("<b>Uninstall DeamonCLI?</b>")
-    title_label.set_halign(Gtk.Align.START)
-    box.pack_start(title_label, False, False, 0)
-
-    body_label = Gtk.Label(
-        label="This will remove all app files, the desktop shortcut,\n"
-              "the tray icon, and the launcher from your system."
-    )
-    body_label.set_halign(Gtk.Align.START)
-    box.pack_start(body_label, False, False, 0)
-
-    countdown_label = Gtk.Label()
-    countdown_label.set_halign(Gtk.Align.START)
-    box.pack_start(countdown_label, False, False, 0)
-
-    box.show_all()
-
-    # Buttons
-    cancel_btn = dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
-    uninstall_btn = dialog.add_button(
-        f"Uninstall ({COUNTDOWN_SECONDS})", Gtk.ResponseType.OK
-    )
-    uninstall_btn.set_sensitive(False)
+    dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+    uninstall_btn = dialog.add_button("Uninstall", Gtk.ResponseType.OK)
     uninstall_btn.get_style_context().add_class("destructive-action")
-
-    remaining = [COUNTDOWN_SECONDS]
-
-    def tick():
-        remaining[0] -= 1
-        if remaining[0] > 0:
-            uninstall_btn.set_label(f"Uninstall ({remaining[0]})")
-            countdown_label.set_markup(
-                f"<span foreground='gray' size='small'>"
-                f"Uninstall button unlocks in {remaining[0]} second"
-                f"{'s' if remaining[0] != 1 else ''}…</span>"
-            )
-            return True  # keep ticking
-        # Countdown done
-        uninstall_btn.set_label("Uninstall")
-        uninstall_btn.set_sensitive(True)
-        countdown_label.set_markup(
-            "<span foreground='gray' size='small'>Ready — click Uninstall to proceed.</span>"
-        )
-        return False  # stop timer
-
-    countdown_label.set_markup(
-        f"<span foreground='gray' size='small'>"
-        f"Uninstall button unlocks in {COUNTDOWN_SECONDS} seconds…</span>"
-    )
-    GLib.timeout_add(1000, tick)
 
     response = dialog.run()
     dialog.destroy()
-
     if response == Gtk.ResponseType.OK:
         do_uninstall()
 
@@ -146,16 +111,11 @@ ind.set_status(AI.IndicatorStatus.ACTIVE)
 menu = Gtk.Menu()
 for label, cb in [
     ("Open DeamonCLI", open_app),
-    (None, None),
+    ("Uninstall", uninstall_cb),
     ("Quit", quit_cb),
-    (None, None),
-    ("Uninstall DeamonCLI…", uninstall_cb),
 ]:
-    if label is None:
-        item = Gtk.SeparatorMenuItem()
-    else:
-        item = Gtk.MenuItem(label=label)
-        item.connect("activate", cb)
+    item = Gtk.MenuItem(label=label)
+    item.connect("activate", cb)
     menu.append(item)
 
 menu.show_all()
