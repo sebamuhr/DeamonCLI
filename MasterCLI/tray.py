@@ -24,6 +24,8 @@ def open_app(_=None):
     subprocess.Popen(["bash", LAUNCH])
 
 def quit_cb(_=None):
+    # Kill the main app too before exiting the tray
+    subprocess.call(["pkill", "-f", "linux_ref.py"])
     Gtk.main_quit()
 
 ind = AI.Indicator.new(
@@ -36,7 +38,7 @@ menu = Gtk.Menu()
 for label, cb in [
     ("Open DeamonCLI", open_app),
     (None, None),
-    ("Quit tray icon", quit_cb),
+    ("Quit", quit_cb),
 ]:
     if label is None:
         item = Gtk.SeparatorMenuItem()

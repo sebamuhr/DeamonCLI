@@ -33,7 +33,8 @@ HIST_PATH   = APP_DIR / "history.db"
 CONFIG_PATH = Path.home() / ".config" / "deamoncli" / "config.json"
 HOME        = Path.home()
 
-DEFAULT_LEFT_WIDTH = 46   # terminal columns
+DEFAULT_LEFT_WIDTH  = 46   # terminal columns
+DEFAULT_TOP_HEIGHT  = 45   # % of right pane given to detail panel
 
 def load_config() -> dict:
     try:
@@ -280,24 +281,37 @@ def run_command(cmd: str, cwd: str = None):
     except Exception as e:
         return "", str(e), 1
 
-# ── Draggable divider ────────────────────────────────────────────────────────
+# ── Draggable dividers ───────────────────────────────────────────────────────
 
 class ResizeDivider(Widget):
-    """1-column draggable bar between the left and right panels."""
+    """Thin draggable separator — orientation='vertical' or 'horizontal'."""
 
     DEFAULT_CSS = """
     ResizeDivider {
+        background: $background;
+        color: $primary-darken-2;
+    }
+    ResizeDivider.-vertical {
         width: 1;
-        background: $primary-darken-2;
+    }
+    ResizeDivider.-horizontal {
+        height: 1;
+        width: 1fr;
     }
     ResizeDivider:hover {
-        background: $accent;
+        color: $accent;
     }
     """
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, orientation: str = "vertical") -> None:
+        super().__init__(classes=f"-{orientation}")
+        self._orientation = orientation
         self._dragging = False
+
+    def render(self):
+        if self._orientation == "vertical":
+            return "│\n" * 500
+        return "─" * 500
 
     def on_mouse_down(self, event) -> None:
         self.capture_mouse()
@@ -307,10 +321,18 @@ class ResizeDivider(Widget):
     def on_mouse_move(self, event) -> None:
         if not self._dragging:
             return
-        new_w = max(28, min(80, int(event.screen_x)))
-        left = self.app.query_one("#left", Vertical)
-        left.styles.width = new_w
-        self.app._left_width = new_w
+        if self._orientation == "vertical":
+            new_w = max(28, min(80, int(event.screen_x)))
+            self.app.query_one("#left", Vertical).styles.width = new_w
+            self.app._left_width = new_w
+        else:
+            pane = self.app.query_one("#right-pane", Vertical)
+            pane_top = pane.region.y
+            pane_h = pane.region.height - 4  # terminal-input-row(3) + this divider(1)
+            rel_y = event.screen_y - pane_top
+            pct = max(10, min(80, int(rel_y / max(1, pane_h) * 100)))
+            self.app.query_one("#detail-panel", ScrollableContainer).styles.height = f"{pct}%"
+            self.app._top_height = pct
         event.stop()
 
     def on_mouse_up(self, event) -> None:
@@ -319,6 +341,7 @@ class ResizeDivider(Widget):
             self._dragging = False
             cfg = load_config()
             cfg["left_width"] = self.app._left_width
+            cfg["top_height"] = self.app._top_height
             save_config(cfg)
         event.stop()
 
@@ -434,7 +457,6 @@ class DeamonCLIApp(App):
         height: 45%;
         padding: 2 3;
         background: $background;
-        border-bottom: solid $primary-darken-2;
     }
 
     /* ── Embedded terminal ── */
@@ -564,9 +586,7 @@ class DeamonCLIApp(App):
 
     """
 
-    BINDINGS = [
-        Binding("ctrl+q", "quit", "Quit"),
-    ]
+    BINDINGS = []  # quit only via tray icon
 
     def __init__(self):
         super().__init__()
@@ -578,6 +598,7 @@ class DeamonCLIApp(App):
         self._cwd               = str(Path.home())
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
+        self._top_height: int   = cfg.get("top_height", DEFAULT_TOP_HEIGHT)
 
     @property
     def _prompt(self) -> str:
@@ -617,6 +638,7 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
+                yield ResizeDivider(orientation="horizontal")
                 yield RichLog(id="terminal-log", highlight=True, wrap=True)
                 with Horizontal(id="terminal-input-row"):
                     yield Label("", id="terminal-prompt", markup=False)
@@ -626,8 +648,8 @@ class DeamonCLIApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        # Apply saved left-panel width
         self.query_one("#left", Vertical).styles.width = self._left_width
+        self.query_one("#detail-panel", ScrollableContainer).styles.height = f"{self._top_height}%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
         log = self.query_one("#terminal-log", RichLog)
         log.write(Text("  DeamonCLI  —  search above, or type any command here.", style="dim"))
@@ -820,7 +842,8 @@ class DeamonCLIApp(App):
 
     def on_unmount(self):
         cfg = load_config()
-        cfg["left_width"] = self._left_width
+        cfg["left_width"]  = self._left_width
+        cfg["top_height"]  = self._top_height
         try:
             ts = os.get_terminal_size()
             cfg["geometry"] = f"{ts.columns}x{ts.lines}"
