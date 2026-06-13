@@ -18,6 +18,7 @@ try:
     from textual.binding import Binding
     from textual._work_decorator import work
     from rich.text import Text
+    from rich.highlighter import Highlighter
 except ImportError:
     print("Run: pip3 install --break-system-packages textual")
     sys.exit(1)
@@ -359,6 +360,72 @@ def _first_program(cmd: str) -> str:
 def needs_real_terminal(cmd: str) -> bool:
     return _first_program(cmd) in EXTERNAL_TERM_PROGS
 
+# ── Placeholder detection ───────────────────────────────────────────────────────
+# Parts of a command the user must replace before running, with a friendly hint.
+# Rules are tried in order; earlier rules win when spans overlap.
+PLACEHOLDER_RULES = [
+    (re.compile(r'<[^<>\s][^<>]*>'),
+     "Replace the part inside < > with your own value"),
+    (re.compile(r'"My changes"'),
+     "Your commit message — briefly describe what you changed"),
+    (re.compile(r'"NetworkName"'),
+     "Your Wi-Fi network name (list nearby ones with:  nmcli dev wifi)"),
+    (re.compile(r'"?YourPassword"?'),
+     "Your Wi-Fi password"),
+    (re.compile(r"'Your[^']*'|\"Your[^\"]*\"|'your[^']*'|\"your[^\"]*\""),
+     "Replace with your own text or question"),
+    (re.compile(r'sk-ant-[\w-]+|sk-[A-Za-z][\w-]+'),
+     "Paste your secret API key here (keep it private)"),
+    (re.compile(r'[A-Za-z]*your-key[\w-]*|[\w-]*-key-here'),
+     "Paste your secret API key here (keep it private)"),
+    (re.compile(r'\buser(?:name)?@[\w.-]+'),
+     "Your login and server address, e.g.  alice@203.0.113.5"),
+    (re.compile(r'\b[\w.+-]+@[\w.-]*(?:server|host|remote)[\w.-]*'),
+     "Your login and server address, e.g.  alice@203.0.113.5"),
+    (re.compile(r'\b\d{1,3}(?:\.\d{1,3}){3}(?:/\d{1,2})?\b'),
+     "The IP address or range to use. Find your own with:  ip addr"),
+    (re.compile(r'\b(?:www\.)?(?:example|yourdomain|mydomain)\.[a-z]{2,}\b'),
+     "Your domain name, e.g.  mysite.com"),
+    (re.compile(r'/path/to/[\w./-]+'),
+     "Replace with the real path on your computer"),
+    (re.compile(r'\b(?:My|New|Old|Your|Sample|Example)[A-Z][\w-]*'
+                r'|\bmy-[\w-]+'
+                r'|\b(?:mymodel|mydata|mysession|mysite|myvm|my-llama|mybackup|newfolder|newproject)\b'),
+     "Replace with a name of your choosing"),
+    (re.compile(r'\b(?:new|old|input|output|audio|video|image|photo|sample|example)[\w-]*\.\w+'),
+     "Replace with your file's name"),
+    (re.compile(r'\./[\w-]+\.\w+'),
+     "Replace with the path to your file"),
+    (re.compile(r'\b(?:newfile|newname|oldname|newfolder|filename|foldername)\b'),
+     "Replace with your file or folder name"),
+]
+
+def find_placeholders(cmd: str):
+    """Return non-overlapping (start, end, hint) spans the user should edit."""
+    if not cmd:
+        return []
+    claimed = [False] * len(cmd)
+    spans = []
+    for rx, hint in PLACEHOLDER_RULES:
+        for m in rx.finditer(cmd):
+            s, e = m.span()
+            if s == e or any(claimed[s:e]):
+                continue
+            for i in range(s, e):
+                claimed[i] = True
+            spans.append((s, e, hint))
+    spans.sort()
+    return spans
+
+class PlaceholderHighlighter(Highlighter):
+    """Colours the replace-me parts inside the editable command line.
+
+    Re-runs on every keystroke, so a part loses its colour once you've
+    replaced it with your own value — colour means 'still needs editing'."""
+    def highlight(self, text: Text) -> None:
+        for s, e, _ in find_placeholders(text.plain):
+            text.stylize("bold black on yellow", s, e)
+
 # ── Draggable dividers ───────────────────────────────────────────────────────
 
 class ResizeDivider(Widget):
@@ -434,35 +501,75 @@ class CommandDetail(Vertical):
 
     def compose(self) -> ComposeResult:
         c = self.cmd
-        external = needs_real_terminal(c["command"])
+        cmd = c["command"]
+        external = needs_real_terminal(cmd)
+        spans = find_placeholders(cmd)
 
         yield Label(c["title"], classes="detail-title")
         yield Label(c.get("category", "").upper(), classes="detail-category")
         yield Rule(classes="detail-rule")
         yield Static(c.get("description", ""), classes="detail-desc")
-        yield Label("Command:", classes="section-label")
-        yield Static(c["command"], classes="code-box detail-cmd")
+
+        if spans:
+            yield Label("✎   Replace the highlighted parts below, then Run it:",
+                        classes="section-label")
+            seen = set()
+            for s, e, hint in spans:
+                tok = cmd[s:e]
+                if (tok, hint) in seen:
+                    continue
+                seen.add((tok, hint))
+                line = Text()
+                line.append("• ", style="dim")
+                line.append(tok, style="bold black on yellow")
+                line.append("  →  ", style="dim")
+                line.append(hint, style="grey85")
+                yield Static(line, classes="ph-hint")
+        else:
+            yield Label("Command — edit if you like, then Run it:", classes="section-label")
+
+        # The single command line: editable, with the replace-me parts coloured
+        with Horizontal(classes="cmd-row"):
+            yield Input(value=cmd, classes="cmd-edit",
+                        highlighter=PlaceholderHighlighter())
+            yield Button("▶  Run it", classes="btn-run", variant="success")
+            yield Button("📋  Copy", classes="btn-copy", variant="default")
 
         if external:
             yield Static("↗   Opens in a new terminal window, ready for you to press Enter.",
                          classes="shell-warning")
 
-        with Horizontal(classes="action-row"):
-            yield Button("▶   Run it", classes="btn-run", variant="success")
-            yield Button("📋  Copy", classes="btn-copy", variant="default")
+    def _edited_command(self) -> str:
+        """The command as the user has edited it (falls back to the original)."""
+        try:
+            v = self.query_one(".cmd-edit", Input).value
+            return v if v.strip() else self.cmd["command"]
+        except Exception:
+            return self.cmd["command"]
+
+    def _run(self) -> None:
+        c = self.cmd
+        cmd = self._edited_command()
+        save_history(self.hcon, c["title"], cmd, c.get("category", ""), "ran")
+        self.app._execute_terminal_cmd(cmd)
+        self.app.query_one("#terminal-input", Input).focus()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        # Pressing Enter inside the edit field runs the command
+        if "cmd-edit" in event.input.classes:
+            event.stop()
+            self._run()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         c = self.cmd
         if "btn-run" in event.button.classes:
             event.stop()
-            save_history(self.hcon, c["title"], c["command"], c.get("category",""), "ran")
-            # Run the command in the terminal below: echoes it, runs it, shows output
-            self.app._execute_terminal_cmd(c["command"])
-            self.app.query_one("#terminal-input", Input).focus()
+            self._run()
         elif "btn-copy" in event.button.classes:
             event.stop()
-            ok = copy_to_clipboard(c["command"])
-            save_history(self.hcon, c["title"], c["command"], c.get("category",""), "copied")
+            cmd = self._edited_command()
+            ok = copy_to_clipboard(cmd)
+            save_history(self.hcon, c["title"], cmd, c.get("category", ""), "copied")
             msg = "📋  Copied!" if ok else "Could not copy — run:  sudo apt install xclip"
             self.app.notify(msg, severity="information" if ok else "warning")
 
@@ -604,6 +711,31 @@ class DeamonCLIApp(App):
         border: round $warning;
         padding: 0 1;
         margin: 0 0 1 0;
+    }
+    .ph-hint {
+        color: $text-muted;
+        margin: 0 0 0 1;
+    }
+    .cmd-row {
+        height: 3;
+        margin: 0 0 1 0;
+    }
+    .cmd-edit {
+        width: 1fr;
+        height: 3;
+        margin: 0;
+        border: round $accent;
+        background: $surface;
+        color: $text;
+    }
+    .cmd-edit:focus {
+        border: round $success;
+    }
+    .cmd-row Button {
+        height: 3;
+        min-width: 12;
+        margin-left: 1;
+        content-align: center middle;
     }
     .action-row {
         height: 3;
