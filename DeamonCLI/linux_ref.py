@@ -789,8 +789,10 @@ class DeamonCLIApp(App):
         self._proc              = None     # running child process
         self._master_fd         = None     # PTY master fd while a command runs
         self._cmd_running           = False
+        self._render_seq        = 0        # guards against stale search results
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
+        self._top_height: int   = cfg.get("top_height", DEFAULT_TOP_HEIGHT)
 
     @property
     def _prompt(self) -> str:
@@ -868,18 +870,20 @@ class DeamonCLIApp(App):
 
     # ── Search ────────────────────────────────────────────────────────────────
 
-    def on_input_changed(self, event: Input.Changed):
+    async def on_input_changed(self, event: Input.Changed):
         if event.input.id != "search-input":
             return
         q = event.value.strip()
+        self._render_seq += 1
+        seq = self._render_seq
         if q:
             results = search_commands(q, self._all_commands)
             self._results = results
-            self._render_results(results, q)
+            await self._render_results(results, q, seq)
             self._search_folders_async(q)   # prepends folder hits when ready
         else:
             self._results = []
-            self._show_recent_searches()
+            await self._show_recent_searches(seq)
 
     @work(thread=True)
     def _search_folders_async(self, query: str) -> None:
@@ -891,7 +895,8 @@ class DeamonCLIApp(App):
         current_q = self.query_one("#search-input", Input).value.strip()
         if current_q == query:
             self._results = folders + self._results
-            self._render_results(self._results, query)
+            self._render_seq += 1
+            self.run_worker(self._render_results(self._results, query, self._render_seq))
 
     def on_input_submitted(self, event: Input.Submitted):
         if event.input.id == "search-input":
@@ -1133,9 +1138,11 @@ class DeamonCLIApp(App):
                                    style="bold red"))
         self._render_terminal()
 
-    def _render_results(self, results: list, query: str):
+    async def _render_results(self, results: list, query: str, seq: int = None):
         lv = self.query_one("#results-list", ListView)
-        lv.clear()
+        await lv.clear()                       # wait for the old items to clear
+        if seq is not None and seq != self._render_seq:
+            return                             # a newer query already superseded this one
         new_items = []
         for i, cmd in enumerate(results[:60]):
             if cmd.get("_folder"):
@@ -1149,12 +1156,14 @@ class DeamonCLIApp(App):
             )
         if not new_items:
             new_items.append(ListItem(Label("No results — try other words or a phrase.")))
-        self.call_after_refresh(lambda items=new_items: lv.mount(*items))
+        await lv.extend(new_items)
 
-    def _show_recent_searches(self):
+    async def _show_recent_searches(self, seq: int = None):
         self._recent = get_recent_searches(self._hcon)
         lv = self.query_one("#results-list", ListView)
-        lv.clear()
+        await lv.clear()
+        if seq is not None and seq != self._render_seq:
+            return
         if not self._recent:
             return
         new_items = [ListItem(Label("  Recent searches:", markup=False))]
@@ -1165,7 +1174,7 @@ class DeamonCLIApp(App):
                 classes="recent-row",
             )
             new_items.append(ListItem(row, name=f"s{i}"))
-        self.call_after_refresh(lambda items=new_items: lv.mount(*items))
+        await lv.extend(new_items)
 
     # ── Result / recent-search selection ─────────────────────────────────────
 
@@ -1223,7 +1232,8 @@ class DeamonCLIApp(App):
             event.stop()
             self._deleting_search = True
             delete_search(self._hcon, event.button.name)
-            self._show_recent_searches()
+            self._render_seq += 1
+            self.run_worker(self._show_recent_searches(self._render_seq))
             self._deleting_search = False
             return
         if event.button.id == "hist-clear-btn":
