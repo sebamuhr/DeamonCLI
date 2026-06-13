@@ -419,11 +419,9 @@ class CommandDetail(Vertical):
         if "btn-run" in event.button.classes:
             event.stop()
             save_history(self.hcon, c["title"], c["command"], c.get("category",""), "ran")
-            inp = self.app.query_one("#terminal-input", Input)
-            inp.value = c["command"]
-            inp.focus()
+            # Run the command in the terminal below: echoes it, runs it, shows output
             self.app._execute_terminal_cmd(c["command"])
-            inp.value = ""
+            self.app.query_one("#terminal-input", Input).focus()
         elif "btn-copy" in event.button.classes:
             event.stop()
             ok = copy_to_clipboard(c["command"])
@@ -485,20 +483,27 @@ class DeamonCLIApp(App):
         background: $background;
     }
 
-    /* ── Embedded terminal ── */
-    #terminal-log {
+    /* ── Embedded terminal — ONE seamless black box (output + prompt) ── */
+    #terminal {
         height: 1fr;
-        min-height: 4;
-        background: $background;
-        border-top: solid $primary-darken-3;
+        min-height: 6;
+        background: black;
+        border-top: tall $primary;     /* the ONLY divider: separates terminal from description */
+        layout: vertical;
+    }
+    #terminal-output {
+        height: 1fr;
+        width: 1fr;
+        background: black;             /* same bg as the prompt row — no visible seam */
+        color: $text;
         padding: 0 1;
+        border: none;
         scrollbar-size: 1 1;
     }
     #terminal-input-row {
-        height: 3;
-        background: $surface;
-        border-top: solid $primary-darken-2;
-        align: left middle;
+        height: 1;
+        background: black;             /* same bg, no border → flush under the output */
+        layout: horizontal;
     }
     #terminal-prompt {
         width: auto;
@@ -506,11 +511,12 @@ class DeamonCLIApp(App):
         padding: 0 0 0 1;
         color: $success;
         text-style: bold;
+        background: black;
     }
     #terminal-input {
         width: 1fr;
         height: 1;
-        background: $surface;
+        background: black;
         border: none;
         padding: 0;
         color: $text;
@@ -653,17 +659,19 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
-                yield RichLog(id="terminal-log", highlight=False, markup=False, wrap=True)
-                with Horizontal(id="terminal-input-row"):
-                    yield Label("", id="terminal-prompt", markup=False)
-                    yield Input(id="terminal-input", placeholder="")
+                with Vertical(id="terminal"):
+                    yield RichLog(id="terminal-output", highlight=False,
+                                  markup=False, wrap=True, auto_scroll=True)
+                    with Horizontal(id="terminal-input-row"):
+                        yield Label("", id="terminal-prompt", markup=False)
+                        yield Input(id="terminal-input", placeholder="")
 
         yield Footer()
 
     def on_mount(self) -> None:
         self.query_one("#left", Vertical).styles.width = self._left_width
-        # Detail panel auto-sizes to content; cap at 45% so the log always has room
-        self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "45%"
+        # Cap the description so the terminal always has room below it
+        self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "55%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
 
     def _welcome_widget(self) -> Static:
@@ -719,25 +727,13 @@ class DeamonCLIApp(App):
 
     # ── Embedded terminal ─────────────────────────────────────────────────────
 
-    def _tlog(self, text: str, style: str = "") -> None:
-        """Write a line to the terminal log (call from UI thread only)."""
-        try:
-            log = self.query_one("#terminal-log", RichLog)
-            if style:
-                log.write(Text(text, style=style))
-            else:
-                log.write(text)
-        except Exception:
-            pass
-
     def _execute_terminal_cmd(self, cmd: str) -> None:
-        prompt = self._prompt
-        # Show the command line in the log
-        self._tlog(Text.assemble(
-            (prompt, "bold green"),
-            (cmd, "bold"),
-        ))
-        # cd is handled locally — a subprocess can't change the parent process's cwd
+        log = self.query_one("#terminal-output", RichLog)
+        # Echo the prompt + command into the scrollback, just like a real shell
+        log.write(Text(self._prompt + cmd, style="bold white"))
+        # Clear the input line now that the command has been entered
+        self.query_one("#terminal-input", Input).value = ""
+
         parts = cmd.split()
         if parts and parts[0] == "cd":
             target = os.path.expanduser(parts[1] if len(parts) > 1 else "~")
@@ -748,23 +744,23 @@ class DeamonCLIApp(App):
                 self._cwd = target
                 self.query_one("#terminal-prompt", Label).update(self._prompt)
             else:
-                self._tlog(f"cd: no such directory: {target}", "bold red")
+                log.write(Text(f"cd: no such directory: {target}", style="red"))
             return
         self._run_terminal_cmd_async(cmd)
 
     @work(thread=True)
     def _run_terminal_cmd_async(self, cmd: str) -> None:
         out, err, rc = run_command(cmd, cwd=self._cwd)
+        self.call_from_thread(self._show_terminal_output, out, err, rc)
 
-        def update():
-            if out.strip():
-                self._tlog(out.rstrip())
-            if err.strip():
-                self._tlog(err.rstrip(), "red")
-            if rc != 0 and not out.strip() and not err.strip():
-                self._tlog(f"[exit {rc}]", "dim red")
-
-        self.call_from_thread(update)
+    def _show_terminal_output(self, out: str, err: str, rc: int) -> None:
+        log = self.query_one("#terminal-output", RichLog)
+        if out and out.strip():
+            log.write(out.rstrip("\n"))
+        if err and err.strip():
+            log.write(Text(err.rstrip("\n"), style="red"))
+        if (not out or not out.strip()) and (not err or not err.strip()) and rc != 0:
+            log.write(Text(f"[exited with code {rc}]", style="dim red"))
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
