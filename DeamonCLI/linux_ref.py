@@ -392,6 +392,16 @@ PLACEHOLDER_RULES = [
                 r'|\bmy-[\w-]+'
                 r'|\b(?:mymodel|mydata|mysession|mysite|myvm|my-llama|mybackup|newfolder|newproject)\b'),
      "Replace with a name of your choosing"),
+    # CamelCase words ending in a placeholder-noun (FolderName, FileName, ServerName…)
+    # but NOT real names like AppImage / AnythingLLM / ServerAliveInterval
+    (re.compile(r'\b[A-Z][a-zA-Z0-9]*?'
+                r'(?:Name|Folder|File|Dir|Directory|Path|Server|Host|Hostname|Address'
+                r'|Password|Passwd|Project|Branch|Repo|Repository|Device|Network|Domain|Account)\b'),
+     "Replace with your own value"),
+    # lowercase compound placeholders (foldername, servername, username…).
+    # Deliberately excludes 'host'/'dir' so real commands hostname/dirname stay untouched.
+    (re.compile(r'\b(?:folder|file|path|server|user|domain|device|branch|repo|project)name\b'),
+     "Replace with your own value"),
     (re.compile(r'\b(?:new|old|input|output|audio|video|image|photo|sample|example)[\w-]*\.\w+'),
      "Replace with your file's name"),
     (re.compile(r'\./[\w-]+\.\w+'),
