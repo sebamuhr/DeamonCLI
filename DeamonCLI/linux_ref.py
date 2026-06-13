@@ -2,6 +2,7 @@
 """Linux Reference — find commands by what they do, not by their name."""
 
 import os, sys, json, sqlite3, subprocess, shutil, difflib, socket
+import pty, fcntl, termios, struct, select, re, tempfile, shlex
 from datetime import datetime
 from pathlib import Path
 
@@ -317,6 +318,47 @@ def run_command(cmd: str, cwd: str = None):
     except Exception as e:
         return "", str(e), 1
 
+# Full-screen / cursor-driven programs that can't render inside the embedded
+# terminal — these open in a real terminal window instead.
+EXTERNAL_TERM_PROGS = {
+    "nano", "vim", "vi", "nvim", "emacs", "emacsclient", "pico", "joe", "micro",
+    "htop", "top", "atop", "btop", "btm", "glances", "bashtop", "bpytop", "gotop",
+    "iftop", "iotop", "nethogs", "nload", "vnstat",
+    "less", "more", "most", "man", "info",
+    "ranger", "mc", "vifm", "nnn", "lf", "ncdu",
+    "tmux", "screen", "byobu",
+    "ssh", "mosh", "telnet", "ftp", "sftp",
+    "tig", "lazygit", "gitui", "lazydocker", "k9s",
+    "alsamixer", "nmtui", "nmcli-tui", "raspi-config", "dpkg-reconfigure",
+    "cmus", "mocp", "ncmpcpp", "newsboat", "vit", "calcurse", "watch",
+}
+
+ANSI_RE = re.compile(
+    r'\x1b\[[0-9;?]*[ -/]*[@-~]'      # CSI sequences
+    r'|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)'  # OSC sequences
+    r'|\x1b[=>]'                       # keypad modes
+    r'|\x1b[()][0-9A-Za-z]'           # charset selection
+)
+
+def _first_program(cmd: str) -> str:
+    """The actual program a command runs, skipping env-assignments and sudo."""
+    head = re.split(r'[|;&]| && | \|\| ', cmd.strip(), maxsplit=1)[0]
+    try:
+        toks = shlex.split(head)
+    except Exception:
+        toks = head.split()
+    i = 0
+    while i < len(toks) and "=" in toks[i] and not toks[i].startswith("-"):
+        i += 1   # skip VAR=value prefixes
+    if i < len(toks) and toks[i] in ("sudo", "doas"):
+        i += 1
+        while i < len(toks) and toks[i].startswith("-"):
+            i += 1
+    return os.path.basename(toks[i]) if i < len(toks) else ""
+
+def needs_real_terminal(cmd: str) -> bool:
+    return _first_program(cmd) in EXTERNAL_TERM_PROGS
+
 # ── Draggable dividers ───────────────────────────────────────────────────────
 
 class ResizeDivider(Widget):
@@ -392,7 +434,7 @@ class CommandDetail(Vertical):
 
     def compose(self) -> ComposeResult:
         c = self.cmd
-        can_run = c.get("can_run", True)
+        external = needs_real_terminal(c["command"])
 
         yield Label(c["title"], classes="detail-title")
         yield Label(c.get("category", "").upper(), classes="detail-category")
@@ -401,18 +443,13 @@ class CommandDetail(Vertical):
         yield Label("Command:", classes="section-label")
         yield Static(c["command"], classes="code-box detail-cmd")
 
-        if not can_run:
-            reason = c.get("shell_only_reason", "This command must run in your terminal.")
-            yield Static(f"⚠   {reason}", classes="shell-warning")
+        if external:
+            yield Static("↗   Opens in a new terminal window, ready for you to press Enter.",
+                         classes="shell-warning")
 
         with Horizontal(classes="action-row"):
-            if can_run:
-                yield Button("▶   Run it", classes="btn-run", variant="success")
-            yield Button(
-                "📋  Copy" if can_run else "📋  Copy  —  paste in terminal",
-                classes="btn-copy",
-                variant="default" if can_run else "warning",
-            )
+            yield Button("▶   Run it", classes="btn-run", variant="success")
+            yield Button("📋  Copy", classes="btn-copy", variant="default")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         c = self.cmd
@@ -615,7 +652,11 @@ class DeamonCLIApp(App):
         self._recent: list      = []
         self._deleting_search   = False
         self._cwd               = str(Path.home())
-        self._term_buffer       = Text()   # accumulated terminal scrollback
+        self._term_buffer       = Text()   # committed terminal scrollback
+        self._cur_line          = ""       # in-progress (un-newlined) output line
+        self._proc              = None     # running child process
+        self._master_fd         = None     # PTY master fd while a command runs
+        self._cmd_running           = False
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
 
@@ -671,6 +712,13 @@ class DeamonCLIApp(App):
         self.query_one("#detail-panel", ScrollableContainer).styles.max_height = "55%"
         self.query_one("#terminal-prompt", Label).update(self._prompt)
 
+    def on_key(self, event) -> None:
+        # Ctrl+C interrupts a running command instead of doing nothing
+        if event.key == "ctrl+c" and self._cmd_running:
+            self._interrupt()
+            event.stop()
+            event.prevent_default()
+
     def _welcome_widget(self) -> Static:
         lines = [
             "Search for what you want to do:\n",
@@ -717,37 +765,93 @@ class DeamonCLIApp(App):
         if event.input.id == "search-input":
             save_search(self._hcon, event.value.strip())
         elif event.input.id == "terminal-input":
-            cmd = event.value.strip()
+            text = event.value
             event.input.value = ""
-            if cmd:
-                self._execute_terminal_cmd(cmd)
+            if self._cmd_running and self._master_fd is not None:
+                # A command is running: send this line to its stdin (password, y/n, chat…)
+                try:
+                    os.write(self._master_fd, (text + "\n").encode())
+                except OSError:
+                    pass
+            else:
+                cmd = text.strip()
+                if cmd:
+                    self._execute_terminal_cmd(cmd)
 
     # ── Embedded terminal ─────────────────────────────────────────────────────
 
-    def _term_write(self, renderable, style: str = "") -> None:
-        """Append a line to the terminal scrollback, then keep the prompt in view."""
+    def _term_commit(self, renderable, style: str = "") -> None:
+        """Append a finished line to the committed scrollback."""
         if self._term_buffer.plain:
             self._term_buffer.append("\n")
         if isinstance(renderable, Text):
             self._term_buffer.append_text(renderable)
         else:
             self._term_buffer.append(str(renderable), style=style)
-        self.query_one("#terminal-scrollback", Static).update(self._term_buffer)
-        # Scroll so the latest line (and the prompt right below it) stays visible
+        # Keep memory bounded: trim to the last ~1500 lines
+        nlines = self._term_buffer.plain.count("\n")
+        if nlines > 1500:
+            keep = "\n".join(self._term_buffer.plain.split("\n")[-1200:])
+            self._term_buffer = Text(keep, style="grey85")
+
+    def _render_terminal(self) -> None:
+        """Repaint the scrollback (committed lines + the in-progress line)."""
+        disp = self._term_buffer.copy()
+        if self._cur_line:
+            if disp.plain:
+                disp.append("\n")
+            disp.append(self._cur_line, style="grey85")
+        self.query_one("#terminal-scrollback", Static).update(disp)
         self.call_after_refresh(
             lambda: self.query_one("#terminal", ScrollableContainer).scroll_end(animate=False)
         )
+
+    def _feed_output(self, text: str) -> None:
+        """Stream raw PTY output into the scrollback, handling \\r, \\b and ANSI."""
+        # Normalise CRLF first; a lone \r remains (progress-bar line overwrite)
+        text = ANSI_RE.sub("", text).replace("\r\n", "\n")
+        for ch in text:
+            if ch == "\r":
+                self._cur_line = ""
+            elif ch == "\n":
+                self._term_commit(self._cur_line, style="grey85")
+                self._cur_line = ""
+            elif ch == "\b":
+                self._cur_line = self._cur_line[:-1]
+            elif ch == "\t":
+                self._cur_line += "    "
+            elif ch >= " ":
+                self._cur_line += ch
+        self._render_terminal()
+
+    def _set_running(self, running: bool) -> None:
+        self._cmd_running = running
+        inp = self.query_one("#terminal-input", Input)
+        lbl = self.query_one("#terminal-prompt", Label)
+        if running:
+            lbl.update("» ")
+            inp.placeholder = "type to answer the running command — Ctrl+C to stop"
+        else:
+            lbl.update(self._prompt)
+            inp.placeholder = ""
 
     def _execute_terminal_cmd(self, cmd: str) -> None:
         # Echo the prompt + command, coloured like a real shell
         line = Text()
         line.append(self._prompt, style="bold green")
         line.append(cmd, style="bold bright_white")
-        self._term_write(line)
-        # Clear the input line now that the command has been entered
+        self._term_commit(line)
+        self._render_terminal()
         self.query_one("#terminal-input", Input).value = ""
 
-        parts = cmd.split()
+        if self._cmd_running:
+            self._term_commit(Text("a command is already running — press Ctrl+C to stop it first",
+                                   style="yellow"))
+            self._render_terminal()
+            return
+
+        # cd is handled locally so it persists across commands
+        parts = cmd.strip().split()
         if parts and parts[0] == "cd":
             target = os.path.expanduser(parts[1] if len(parts) > 1 else "~")
             if not os.path.isabs(target):
@@ -757,22 +861,145 @@ class DeamonCLIApp(App):
                 self._cwd = target
                 self.query_one("#terminal-prompt", Label).update(self._prompt)
             else:
-                self._term_write(f"cd: no such directory: {target}", style="bold red")
+                self._term_commit(f"cd: no such directory: {target}", style="bold red")
+                self._render_terminal()
             return
-        self._run_terminal_cmd_async(cmd)
+
+        # Full-screen / cursor programs open in a real terminal, pre-typed
+        if needs_real_terminal(cmd):
+            self._open_in_real_terminal(cmd)
+            return
+
+        self._spawn_pty(cmd)
+
+    # ── PTY-backed execution (sudo, prompts and interactive all work here) ──────
+    def _spawn_pty(self, cmd: str) -> None:
+        master, slave = pty.openpty()
+        try:
+            cols = max(self.query_one("#terminal", ScrollableContainer).size.width - 2, 20)
+        except Exception:
+            cols = 80
+        try:
+            fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 40, cols, 0, 0))
+        except Exception:
+            pass
+        env = {**os.environ, "TERM": "xterm-256color", "PAGER": "cat", "GIT_PAGER": "cat"}
+        try:
+            proc = subprocess.Popen(
+                ["bash", "-lc", cmd],
+                stdin=slave, stdout=slave, stderr=slave,
+                cwd=self._cwd, env=env,
+                preexec_fn=os.setsid, close_fds=True,
+            )
+        except Exception as e:
+            try:
+                os.close(master); os.close(slave)
+            except Exception:
+                pass
+            self._term_commit(Text(f"failed to start: {e}", style="bold red"))
+            self._render_terminal()
+            return
+        os.close(slave)
+        self._proc = proc
+        self._master_fd = master
+        self._set_running(True)
+        self._read_pty_worker()
 
     @work(thread=True)
-    def _run_terminal_cmd_async(self, cmd: str) -> None:
-        out, err, rc = run_command(cmd, cwd=self._cwd)
-        self.call_from_thread(self._show_terminal_output, out, err, rc)
+    def _read_pty_worker(self) -> None:
+        fd, proc = self._master_fd, self._proc
+        while True:
+            try:
+                r, _, _ = select.select([fd], [], [], 0.1)
+            except (OSError, ValueError):
+                break
+            if r:
+                try:
+                    data = os.read(fd, 65536)
+                except OSError:
+                    break
+                if not data:
+                    break
+                self.call_from_thread(self._feed_output, data.decode("utf-8", "replace"))
+            elif proc.poll() is not None:
+                break
+        # Drain anything left after the process exits
+        try:
+            while True:
+                r, _, _ = select.select([fd], [], [], 0.05)
+                if not r:
+                    break
+                data = os.read(fd, 65536)
+                if not data:
+                    break
+                self.call_from_thread(self._feed_output, data.decode("utf-8", "replace"))
+        except OSError:
+            pass
+        rc = proc.wait()
+        self.call_from_thread(self._cmd_finished, rc)
 
-    def _show_terminal_output(self, out: str, err: str, rc: int) -> None:
-        if out and out.strip():
-            self._term_write(out.rstrip("\n"), style="grey85")
-        if err and err.strip():
-            self._term_write(err.rstrip("\n"), style="bold red")
-        if (not out or not out.strip()) and (not err or not err.strip()) and rc != 0:
-            self._term_write(f"[exited with code {rc}]", style="yellow")
+    def _cmd_finished(self, rc: int) -> None:
+        if self._cur_line:
+            self._term_commit(self._cur_line, style="grey85")
+            self._cur_line = ""
+        try:
+            if self._master_fd is not None:
+                os.close(self._master_fd)
+        except Exception:
+            pass
+        self._master_fd = None
+        self._proc = None
+        self._set_running(False)
+        if rc not in (0, None):
+            self._term_commit(Text(f"[exit {rc}]", style="yellow"))
+        self._render_terminal()
+
+    def _interrupt(self) -> None:
+        """Send Ctrl-C to the running command (without quitting the app)."""
+        if self._cmd_running and self._master_fd is not None:
+            try:
+                os.write(self._master_fd, b"\x03")
+            except OSError:
+                pass
+
+    # ── Open a full-screen program in a real terminal, command pre-typed ────────
+    def _open_in_real_terminal(self, cmd: str) -> None:
+        env = {**os.environ, "DISPLAY": os.environ.get("DISPLAY", ":0")}
+        rcfile = tempfile.NamedTemporaryFile("w", suffix=".dcrc", delete=False)
+        rcfile.write("source ~/.bashrc 2>/dev/null\n")
+        rcfile.write(f"cd {shlex.quote(self._cwd)} 2>/dev/null\n")
+        if "\n" not in cmd:
+            esc = cmd.replace("\\", "\\\\").replace('"', '\\"')
+            rcfile.write(f'history -s "{esc}"\n')
+            # Pre-fill the prompt with the command (user just presses Enter to run)
+            rcfile.write(f"bind '\"\\e[0n\": \"{esc}\"' 2>/dev/null\n")
+            rcfile.write("printf '\\e[5n'\n")
+        else:
+            rcfile.write("printf '%s\\n' '# paste-ready command was multi-line; see below'\n")
+            for ln in cmd.splitlines():
+                rcfile.write(f'history -s {shlex.quote(ln)}\n')
+        # The bind lives in shell memory, so the temp rcfile can delete itself now
+        rcfile.write(f"rm -f {shlex.quote(rcfile.name)}\n")
+        rcfile.close()
+
+        launched = False
+        for term in (["gnome-terminal", "--", "bash", "--rcfile", rcfile.name, "-i"],
+                     ["x-terminal-emulator", "-e", f"bash --rcfile {shlex.quote(rcfile.name)} -i"],
+                     ["xterm", "-e", f"bash --rcfile {shlex.quote(rcfile.name)} -i"]):
+            if shutil.which(term[0]):
+                try:
+                    subprocess.Popen(term, env=env, start_new_session=True)
+                    launched = True
+                    break
+                except Exception:
+                    continue
+        if launched:
+            self._term_commit(Text("↗ opened in a new terminal window — press Enter there to run it",
+                                   style="cyan"))
+        else:
+            self._term_commit(Text("could not open a terminal window — use Copy instead",
+                                   style="bold red"))
+        self._render_terminal()
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
@@ -875,6 +1102,12 @@ class DeamonCLIApp(App):
             return
 
     def on_unmount(self):
+        # Stop any running child so it doesn't linger after the app closes
+        if self._proc is not None:
+            try:
+                os.killpg(os.getpgid(self._proc.pid), 15)
+            except Exception:
+                pass
         cfg = load_config()
         cfg["left_width"] = self._left_width
         try:
