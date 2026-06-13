@@ -12,7 +12,7 @@ try:
     from textual.widgets import (
         Header, Footer, ListView, ListItem, Label,
         Button, Input, Static, DataTable,
-        TabbedContent, TabPane, Rule, RichLog
+        TabbedContent, TabPane, Rule
     )
     from textual.binding import Binding
     from textual._work_decorator import work
@@ -483,32 +483,29 @@ class DeamonCLIApp(App):
         background: $background;
     }
 
-    /* ── Embedded terminal — ONE seamless black box (output + prompt) ── */
+    /* ── Embedded terminal — ONE black box; output grows from top, prompt follows ── */
     #terminal {
         height: 1fr;
         min-height: 6;
         background: black;
         border-top: tall $primary;     /* the ONLY divider: separates terminal from description */
-        layout: vertical;
-    }
-    #terminal-output {
-        height: 1fr;
-        width: 1fr;
-        background: black;             /* same bg as the prompt row — no visible seam */
-        color: $text;
         padding: 0 1;
-        border: none;
+        overflow-y: auto;
         scrollbar-size: 1 1;
+    }
+    #terminal-scrollback {
+        height: auto;                  /* only as tall as its content → prompt sits right under */
+        width: 1fr;
+        background: black;
     }
     #terminal-input-row {
         height: 1;
-        background: black;             /* same bg, no border → flush under the output */
-        layout: horizontal;
+        width: 1fr;
+        background: black;             /* same bg, no border → flush under the last output line */
     }
     #terminal-prompt {
         width: auto;
         height: 1;
-        padding: 0 0 0 1;
         color: $success;
         text-style: bold;
         background: black;
@@ -618,6 +615,7 @@ class DeamonCLIApp(App):
         self._recent: list      = []
         self._deleting_search   = False
         self._cwd               = str(Path.home())
+        self._term_buffer       = Text()   # accumulated terminal scrollback
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
 
@@ -659,9 +657,8 @@ class DeamonCLIApp(App):
             with Vertical(id="right-pane"):
                 with ScrollableContainer(id="detail-panel"):
                     yield self._welcome_widget()
-                with Vertical(id="terminal"):
-                    yield RichLog(id="terminal-output", highlight=False,
-                                  markup=False, wrap=True, auto_scroll=True)
+                with ScrollableContainer(id="terminal"):
+                    yield Static("", id="terminal-scrollback", markup=False)
                     with Horizontal(id="terminal-input-row"):
                         yield Label("", id="terminal-prompt", markup=False)
                         yield Input(id="terminal-input", placeholder="")
@@ -727,10 +724,26 @@ class DeamonCLIApp(App):
 
     # ── Embedded terminal ─────────────────────────────────────────────────────
 
+    def _term_write(self, renderable, style: str = "") -> None:
+        """Append a line to the terminal scrollback, then keep the prompt in view."""
+        if self._term_buffer.plain:
+            self._term_buffer.append("\n")
+        if isinstance(renderable, Text):
+            self._term_buffer.append_text(renderable)
+        else:
+            self._term_buffer.append(str(renderable), style=style)
+        self.query_one("#terminal-scrollback", Static).update(self._term_buffer)
+        # Scroll so the latest line (and the prompt right below it) stays visible
+        self.call_after_refresh(
+            lambda: self.query_one("#terminal", ScrollableContainer).scroll_end(animate=False)
+        )
+
     def _execute_terminal_cmd(self, cmd: str) -> None:
-        log = self.query_one("#terminal-output", RichLog)
-        # Echo the prompt + command into the scrollback, just like a real shell
-        log.write(Text(self._prompt + cmd, style="bold white"))
+        # Echo the prompt + command, coloured like a real shell
+        line = Text()
+        line.append(self._prompt, style="bold green")
+        line.append(cmd, style="bold bright_white")
+        self._term_write(line)
         # Clear the input line now that the command has been entered
         self.query_one("#terminal-input", Input).value = ""
 
@@ -744,7 +757,7 @@ class DeamonCLIApp(App):
                 self._cwd = target
                 self.query_one("#terminal-prompt", Label).update(self._prompt)
             else:
-                log.write(Text(f"cd: no such directory: {target}", style="red"))
+                self._term_write(f"cd: no such directory: {target}", style="bold red")
             return
         self._run_terminal_cmd_async(cmd)
 
@@ -754,13 +767,12 @@ class DeamonCLIApp(App):
         self.call_from_thread(self._show_terminal_output, out, err, rc)
 
     def _show_terminal_output(self, out: str, err: str, rc: int) -> None:
-        log = self.query_one("#terminal-output", RichLog)
         if out and out.strip():
-            log.write(out.rstrip("\n"))
+            self._term_write(out.rstrip("\n"), style="grey85")
         if err and err.strip():
-            log.write(Text(err.rstrip("\n"), style="red"))
+            self._term_write(err.rstrip("\n"), style="bold red")
         if (not out or not out.strip()) and (not err or not err.strip()) and rc != 0:
-            log.write(Text(f"[exited with code {rc}]", style="dim red"))
+            self._term_write(f"[exited with code {rc}]", style="yellow")
 
     def _render_results(self, results: list, query: str):
         lv = self.query_one("#results-list", ListView)
