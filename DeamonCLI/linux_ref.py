@@ -287,8 +287,9 @@ def save_history(con, title, command, category, action):
     con.commit()
 
 def get_history(con, limit=200):
+    # Columns ordered for display: What, Action, Date/Time, Command (newest first)
     return con.execute(
-        "SELECT ran_at, action, title, command FROM history ORDER BY id DESC LIMIT ?",
+        "SELECT title, action, ran_at, command FROM history ORDER BY id DESC LIMIT ?",
         (limit,)
     ).fetchall()
 
@@ -809,6 +810,7 @@ class DeamonCLIApp(App):
         self._proc              = None     # running child process
         self._master_fd         = None     # PTY master fd while a command runs
         self._cmd_running           = False
+        self._history_rows: list = []      # rows backing the History table
         self._render_seq        = 0        # guards against stale search results
         cfg                     = load_config()
         self._left_width: int   = cfg.get("left_width", DEFAULT_LEFT_WIDTH)
@@ -1241,11 +1243,22 @@ class DeamonCLIApp(App):
         try:
             table = self.query_one("#history-table", DataTable)
             table.clear(columns=True)
-            table.add_columns("Time", "Action", "What", "Command")
-            for row in get_history(self._hcon):
+            table.add_columns("What", "Action", "Date/Time", "Command")
+            self._history_rows = get_history(self._hcon)
+            for row in self._history_rows:
                 table.add_row(*row)
         except Exception:
             pass
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Selecting a history row loads it into the top-right field to run again
+        if event.data_table.id != "history-table":
+            return
+        try:
+            title, _action, _when, command = self._history_rows[event.cursor_row]
+        except (IndexError, AttributeError, TypeError):
+            return
+        self._show_detail({"title": title, "command": command, "category": "History"})
 
     def on_button_pressed(self, event: Button.Pressed):
         if "btn-del-search" in event.button.classes:
