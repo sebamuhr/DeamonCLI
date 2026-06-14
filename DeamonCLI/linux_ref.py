@@ -402,6 +402,16 @@ PLACEHOLDER_RULES = [
     # Deliberately excludes 'host'/'dir' so real commands hostname/dirname stay untouched.
     (re.compile(r'\b(?:folder|file|path|server|user|domain|device|branch|repo|project)name\b'),
      "Replace with your own value"),
+    # install / service / container placeholders: package-name, app.id, container-id…
+    # (NOT the 'name' flag in `find -name`, nor copy-id from ssh-copy-id)
+    (re.compile(r'\b(?:program|package|app|module|library|service|image|container|project)[-_]name\b'
+                r'|\b(?:container|image|app)[-_]id\b|\bapp\.id\b'),
+     "Replace with the name of the program / item you want"),
+    # example process ID (kill 12345) and GitHub owner/repo in clone URLs
+    (re.compile(r'\b12345\b'),
+     "Replace with the process ID — find it with:  ps aux | grep <name>"),
+    (re.compile(r'\buser/repo\b'),
+     "Replace 'user/repo' with the GitHub owner and repository"),
     (re.compile(r'\b(?:new|old|input|output|audio|video|image|photo|sample|example)[\w-]*\.\w+'),
      "Replace with your file's name"),
     (re.compile(r'\./[\w-]+\.\w+'),
