@@ -1277,15 +1277,22 @@ class DeamonCLIApp(App):
         except Exception:
             pass
 
-    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
-        # Selecting a history row loads it into the top-right field to run again
-        if event.data_table.id != "history-table":
-            return
+    def _show_history_row(self, cursor_row: int) -> None:
         try:
-            title, _action, _when, command = self._history_rows[event.cursor_row]
+            title, _action, _when, command = self._history_rows[cursor_row]
         except (IndexError, AttributeError, TypeError):
             return
         self._show_detail({"title": title, "command": command, "category": "History"})
+
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        # Just moving the cursor (arrows or click) shows the item on the right
+        if event.data_table.id == "history-table":
+            self._show_history_row(event.cursor_row)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Enter / click also loads it (same result)
+        if event.data_table.id == "history-table":
+            self._show_history_row(event.cursor_row)
 
     def on_button_pressed(self, event: Button.Pressed):
         if "btn-del-search" in event.button.classes:
