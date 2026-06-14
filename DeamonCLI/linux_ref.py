@@ -810,6 +810,8 @@ class DeamonCLIApp(App):
         self._proc              = None     # running child process
         self._master_fd         = None     # PTY master fd while a command runs
         self._cmd_running           = False
+        self._cmd_history: list = []       # terminal commands, for ↑/↓ recall
+        self._cmd_hist_idx: int = 0        # cursor into _cmd_history
         self._history_rows: list = []      # rows backing the History table
         self._render_seq        = 0        # guards against stale search results
         cfg                     = load_config()
@@ -874,6 +876,26 @@ class DeamonCLIApp(App):
             self._interrupt()
             event.stop()
             event.prevent_default()
+            return
+        # ↑/↓ recall previous terminal commands, like a normal shell
+        focused = self.focused
+        if (focused is not None and focused.id == "terminal-input"
+                and not self._cmd_running and event.key in ("up", "down")):
+            self._recall_command(-1 if event.key == "up" else 1)
+            event.stop()
+            event.prevent_default()
+
+    def _recall_command(self, direction: int) -> None:
+        if not self._cmd_history:
+            return
+        inp = self.query_one("#terminal-input", Input)
+        n = len(self._cmd_history)
+        self._cmd_hist_idx = max(0, min(n, self._cmd_hist_idx + direction))
+        if self._cmd_hist_idx >= n:          # past the newest → blank line
+            inp.value = ""
+        else:
+            inp.value = self._cmd_history[self._cmd_hist_idx]
+        inp.cursor_position = len(inp.value)
 
     def _welcome_widget(self) -> Static:
         lines = [
@@ -1008,6 +1030,11 @@ class DeamonCLIApp(App):
                                    style="yellow"))
             self._render_terminal()
             return
+
+        # Record in the ↑/↓ recall history (skip consecutive duplicates)
+        if cmd.strip() and (not self._cmd_history or self._cmd_history[-1] != cmd):
+            self._cmd_history.append(cmd)
+        self._cmd_hist_idx = len(self._cmd_history)
 
         # cd is handled locally so it persists across commands
         parts = cmd.strip().split()
