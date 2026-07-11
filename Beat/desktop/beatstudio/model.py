@@ -20,6 +20,11 @@ class Event:
     tune: int = 0                # per-note pitch offset in semitones
     src_t: float | None = None   # position in the original take (s)
     src_dur: float | None = None
+    morph: float | None = None       # synth: morph amount at note START (0=base, 1=modulator)
+    morph_end: float | None = None   # synth: morph amount at note END (glides across the note)
+    env: list | None = None          # synth: the drawn line sampled over the note (0..1) = volume+morph
+    src_track: str | None = None     # sync: the Separation-Board track (lane_id) that generated this
+    src_pts: list | None = None      # sync: the board anchor id(s) behind it (1 hit / a synth run)
     eq: dict = field(default_factory=lambda: {"low": 0, "mid": 0, "high": 0})
     id: str = field(default_factory=lambda: uid("e"))
 
@@ -27,7 +32,8 @@ class Event:
 @dataclass
 class Lane:
     kind: str = "drum"           # drum | synth | sample | master
-    sound: str = "snare"
+    sound: str = "snare"         # for synth: the BASE waveform
+    sound_b: str = ""            # synth MODULATOR waveform (morph target); "" = no morph
     name: str = "Sound"
     muted: bool = False
     solo: bool = False
@@ -35,6 +41,13 @@ class Lane:
     has_original: bool = False   # a real master take is available to play back
     play_original: bool = False  # play the real recording slice instead of the instrument
     src_master: str | None = None
+    color: str = ""              # stable hue (hex); "" = fall back to index colour
+    sound_params: dict = field(default_factory=dict)    # synth BASE knobs (see synth.SYNTH_KNOBS)
+    sound_b_params: dict = field(default_factory=dict)  # synth MODULATOR knobs
+    lo_note: int = 48            # synth siren: pitch at the BOTTOM of the drawn line (morph=0)
+    hi_note: int = 72            # synth siren: pitch at the TOP of the drawn line (morph=1)
+    vol_pts: list = field(default_factory=list)         # Studio volume automation [{beat,v}] (0..1.5)
+    fx: dict = field(default_factory=dict)              # "Original" FX rack amounts (see synth.FX_KNOBS)
     eq: dict = field(default_factory=lambda: {"low": 0, "mid": 0, "high": 0})
     id: str = field(default_factory=lambda: uid("R"))
 
@@ -80,12 +93,10 @@ class Project:
 
 
 def empty_project() -> Project:
-    """A clean grid with a few ready-to-record tracks and no beats."""
-    p = Project(bpm=90)
-    for kind, sound, name in (("drum", "kick", "Kick"), ("drum", "snare", "Snare"),
-                              ("drum", "hat", "Hat"), ("synth", "square", "Square")):
-        p.lanes.append(Lane(kind=kind, sound=sound, name=name))
-    return p
+    """A clean, EMPTY grid — no tracks. Tracks arrive live from the Separation Board as you
+    create them there (one by one), so the Studio never shows rows you didn't make. A fine grid
+    (1/16 of a beat) so even a tiny nudge on the board reflects on the grid while staying in tempo."""
+    return Project(bpm=90, grid=16)
 
 
 def demo_project() -> Project:

@@ -35,6 +35,13 @@ def lane_color(i: int) -> QColor:
     return QColor.fromHsl(h, int(0.68 * 255), int(0.62 * 255))
 
 
+def lane_color_of(lane, i: int) -> QColor:
+    """A lane's STABLE colour: its own stored hue if it has one, else the index colour. This is
+    what keeps a track's colour fixed even when tracks above it are removed."""
+    c = getattr(lane, "color", "") or ""
+    return QColor(c) if c else lane_color(i)
+
+
 def _w(weight) -> QFont.Weight:
     return weight if isinstance(weight, QFont.Weight) else QFont.Weight(int(weight))
 

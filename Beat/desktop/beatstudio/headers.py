@@ -61,10 +61,11 @@ class TrackHeaders(QWidget):
             if lane.id == self.recording_lane:      # recording row glows red
                 p.fillRect(QRectF(0, top, self.width(), laneH), QColor(255, 93, 93, 34))
             # colour chip
-            p.setBrush(QBrush(theme.lane_color(i)))
+            lc = theme.lane_color_of(lane, i)
+            p.setBrush(QBrush(lc))
             p.setPen(Qt.NoPen)
             chip = QRectF(9, top + laneH / 2 - 5, 10, 10)
-            path = QPainterPath(); path.addRoundedRect(chip, 3, 3); p.fillPath(path, QBrush(theme.lane_color(i)))
+            path = QPainterPath(); path.addRoundedRect(chip, 3, 3); p.fillPath(path, QBrush(lc))
             # name + subtitle
             p.setPen(theme.INK)
             p.setFont(theme.sans(10, 600))
@@ -85,10 +86,10 @@ class TrackHeaders(QWidget):
                                theme.ACCENT_CY if on else QColor("#16161e"),
                                theme.ACCENT_CY if on else theme.BORDER_2, theme.mono(8, 600))
                 self._hit.append((og, lane.id, "original"))
-            # buttons on the right: REC, S, M, gear
+            # buttons on the right: REC, S, V, M, gear
             bw, bh = 26, 26
             gap = 6
-            bx = self.width() - (bw * 4 + gap * 3) - 9
+            bx = self.width() - (bw * 5 + gap * 4) - 9
             by = top + laneH / 2 - bh / 2
             rec = self._btn(p, bx, by, bw, bh, "●", theme.REC, QColor(255, 93, 93, 28),
                             QColor(255, 93, 93, 120), theme.mono(9))
@@ -96,12 +97,19 @@ class TrackHeaders(QWidget):
             s = self._btn(p, bx + (bw + gap), by, bw, bh, "S", theme.INK_DIM,
                           QColor("#16161e"), theme.BORDER_2, theme.mono(10, 700))
             self._hit.append((s, lane.id, "solo"))
+            # V — show/hide this lane's volume automation line on the timeline
+            vol_on = lane.id in getattr(self.timeline, "vol_lanes", set())
+            v_bg = theme.ACCENT_CY if vol_on else QColor("#16161e")
+            v_fg = QColor("#06222b") if vol_on else theme.INK_DIM
+            v = self._btn(p, bx + (bw + gap) * 2, by, bw, bh, "V", v_fg, v_bg,
+                          theme.ACCENT_CY if vol_on else theme.BORDER_2, theme.mono(10, 700))
+            self._hit.append((v, lane.id, "vol"))
             m_bg = theme.REC if lane.muted else QColor("#16161e")
             m_fg = QColor("#2a0d0d") if lane.muted else theme.INK_DIM
-            m = self._btn(p, bx + (bw + gap) * 2, by, bw, bh, "M", m_fg, m_bg,
+            m = self._btn(p, bx + (bw + gap) * 3, by, bw, bh, "M", m_fg, m_bg,
                           theme.BORDER_2, theme.mono(10, 700))
             self._hit.append((m, lane.id, "mute"))
-            g = self._btn(p, bx + (bw + gap) * 3, by, bw, bh, "⚙", theme.INK_DIM,
+            g = self._btn(p, bx + (bw + gap) * 4, by, bw, bh, "⚙", theme.INK_DIM,
                           QColor("#16161e"), theme.BORDER_2, theme.mono(11))
             self._hit.append((g, lane.id, "gear"))
 

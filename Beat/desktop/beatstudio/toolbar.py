@@ -63,6 +63,7 @@ def mono(size):
 
 class Toolbar(QWidget):
     play = Signal(); stop = Signal(); record_master = Signal()
+    open_separator = Signal()
     save = Signal(); grooves = Signal(); my_sounds = Signal()
     metronome = Signal(); bpm_changed = Signal(int)
     undo = Signal(); redo = Signal(); clear_all = Signal()
@@ -73,7 +74,7 @@ class Toolbar(QWidget):
         self.setFixedHeight(96)
         lay = QHBoxLayout(self); lay.setContentsMargins(24, 20, 24, 20); lay.setSpacing(10)
 
-        b_play = _icon_btn("▶", "Play / Pause (Space)"); b_play.clicked.connect(self.play.emit)
+        self.b_play = b_play = _icon_btn("▶", "Play / Pause (Space)"); b_play.clicked.connect(self.play.emit)
         b_stop = _icon_btn("■", "Stop"); b_stop.clicked.connect(self.stop.emit)
         self.b_undo = _icon_btn("↺", "Undo (Ctrl+Z)"); self.b_undo.clicked.connect(self.undo.emit)
         self.b_redo = _icon_btn("↻", "Redo (Ctrl+Shift+Z)"); self.b_redo.clicked.connect(self.redo.emit)
@@ -108,7 +109,21 @@ class Toolbar(QWidget):
             "border-radius:12px;color:#c0a8ff;padding:0 16px;}"
             "QPushButton:hover{background:rgba(124,92,255,0.22);}")
         self.rec_master.clicked.connect(self.record_master.emit)
-        lay.addWidget(self.rec_master)
+        # Record master lives ONLY on the Separation Board now — keep this widget (its state helpers
+        # are still called) but hide it from the main screen.
+        self.rec_master.setParent(self); self.rec_master.hide()
+
+        # Open the Separation Board (the "master track" separator) — a separate window you can
+        # park on a 2nd monitor and open/close without losing your work.
+        self.sep_btn = QPushButton("⊞  Separator")
+        self.sep_btn.setFixedHeight(54); self.sep_btn.setCursor(Qt.PointingHandCursor)
+        self.sep_btn.setFont(theme.sans(13, 600))
+        self.sep_btn.setStyleSheet(
+            "QPushButton{background:rgba(61,214,255,0.12);border:1px solid #2f6d8a;"
+            "border-radius:12px;color:#8fe6ff;padding:0 16px;}"
+            "QPushButton:hover{background:rgba(61,214,255,0.20);}")
+        self.sep_btn.clicked.connect(self.open_separator.emit)
+        lay.addWidget(self.sep_btn)
 
         # live input level meter (only visible while recording)
         self.meter = _LevelMeter()
@@ -169,6 +184,11 @@ class Toolbar(QWidget):
 
     def set_rec_level(self, level, peak):
         self.meter.set_level(level, peak)
+
+    def set_playing(self, playing: bool):
+        # ▶ while stopped/paused, ⏸ while playing — Stop (■) is a separate button that rewinds.
+        self.b_play.setText("⏸" if playing else "▶")
+        self.b_play.setToolTip("Pause (Space)" if playing else "Play (Space)")
 
     def set_undo_state(self, can_undo, can_redo):
         self.b_undo.setEnabled(can_undo); self.b_undo.setStyleSheet(self.b_undo.styleSheet())

@@ -76,6 +76,14 @@ class AudioEngine:
             except Exception:
                 pass
 
+    def stop_one_shot(self):
+        """Stop a fire-and-forget preview started with one_shot()."""
+        if self.available:
+            try:
+                sd.stop()
+            except Exception:
+                pass
+
     def stop(self):
         self._playing = False
         if self._stream is not None:

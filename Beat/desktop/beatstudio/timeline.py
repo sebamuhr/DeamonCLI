@@ -41,6 +41,9 @@ class TimelineView(QGraphicsView):
         self.rec_clip = False       # peak near 1.0 → draw the wave red (too loud)
         self._drag = None           # (event, moved?)
         self._marquee = None        # (lane_index, x0, x1)
+        self.vol_lanes: set[str] = set()   # lane ids whose volume-automation line is shown
+        self._vol_drag = None       # (lane, point_dict) while dragging a volume node
+        self.VOL_MAX = 1.5          # gain at the top of a lane row (1.0 = unity, 0 = silent)
         self.setMouseTracking(True)
         self.setDragMode(QGraphicsView.NoDrag)
         # Pin the scene to the top-left; otherwise QGraphicsView CENTERS content that's
@@ -137,7 +140,7 @@ class TimelineView(QGraphicsView):
             r = self._event_rect(e, i)
             if r.right() < rect.left() or r.left() > rect.right():
                 continue
-            p.setBrush(QBrush(theme.lane_color(i)))
+            p.setBrush(QBrush(theme.lane_color_of(lane, i)))
             p.setPen(Qt.NoPen)
             p.setOpacity(0.30 if lane.muted else 0.95)
             p.drawRoundedRect(r, 3, 3)
@@ -201,6 +204,11 @@ class TimelineView(QGraphicsView):
             p.fillRect(QRectF(min(x0, x1), top, abs(x1 - x0), theme.LANE_H), QColor(61, 214, 255, 30))
             p.setPen(QPen(QColor(61, 214, 255, 140), 1))
             p.drawRect(QRectF(min(x0, x1), top, abs(x1 - x0), theme.LANE_H))
+        # volume automation lines (only the lanes with V toggled on)
+        if self.vol_lanes:
+            for i, lane in enumerate(proj.lanes):
+                if lane.id in self.vol_lanes:
+                    self._draw_vol_lane(p, i, lane, rect)
         # mirror of the minimap dot ("you are here")
         if self.mirror is not None:
             mx, my = self.mirror
@@ -208,6 +216,62 @@ class TimelineView(QGraphicsView):
             p.drawEllipse(QPointF(mx, my), 48, 48)
             p.setBrush(QColor(61, 214, 255, 160)); p.setPen(Qt.NoPen)
             p.drawEllipse(QPointF(mx, my), 5, 5)
+
+    # ---- volume automation geometry ----
+    _VOL_PAD = 7.0
+
+    def _vol_y_of(self, i, v):
+        top = i * theme.LANE_H + self._VOL_PAD
+        h = theme.LANE_H - 2 * self._VOL_PAD
+        frac = 1.0 - max(0.0, min(self.VOL_MAX, v)) / self.VOL_MAX
+        return top + frac * h
+
+    def _vol_v_of(self, i, y):
+        top = i * theme.LANE_H + self._VOL_PAD
+        h = theme.LANE_H - 2 * self._VOL_PAD
+        frac = (y - top) / max(1.0, h)
+        return max(0.0, min(self.VOL_MAX, (1.0 - frac) * self.VOL_MAX))
+
+    def _draw_vol_lane(self, p, i, lane, rect):
+        pts = sorted(lane.vol_pts or [], key=lambda q: q["beat"])
+        col = theme.lane_color_of(lane, i)
+        line = QColor(col); line.setAlpha(230)
+        # unity reference line
+        yu = self._vol_y_of(i, 1.0)
+        up = QPen(QColor(255, 255, 255, 40), 1); up.setStyle(Qt.DashLine)
+        p.setPen(up); p.drawLine(int(rect.left()), int(yu), int(rect.right()), int(yu))
+        # the envelope polyline (flat unity when empty)
+        p.setPen(QPen(line, 2))
+        if not pts:
+            p.drawLine(int(rect.left()), int(yu), int(rect.right()), int(yu))
+            return
+        x0 = self.x_of_beat(pts[0]["beat"]); y0 = self._vol_y_of(i, pts[0]["v"])
+        p.drawLine(int(rect.left()), int(y0), int(x0), int(y0))     # hold before first
+        prev = (x0, y0)
+        for q in pts[1:]:
+            x = self.x_of_beat(q["beat"]); y = self._vol_y_of(i, q["v"])
+            p.drawLine(int(prev[0]), int(prev[1]), int(x), int(y))
+            prev = (x, y)
+        p.drawLine(int(prev[0]), int(prev[1]), int(rect.right()), int(prev[1]))  # hold after last
+        # nodes
+        p.setBrush(QBrush(QColor(col))); p.setPen(QPen(QColor("#0b0b12"), 1.5))
+        for q in pts:
+            x = self.x_of_beat(q["beat"]); y = self._vol_y_of(i, q["v"])
+            p.drawEllipse(QPointF(x, y), 4.5, 4.5)
+
+    def _vol_node_at(self, sp):
+        """Return (lane, point_dict, index) for a volume node under the scene point, else None."""
+        i = int(sp.y() // theme.LANE_H)
+        if i < 0 or i >= len(self.project.lanes):
+            return None
+        lane = self.project.lanes[i]
+        if lane.id not in self.vol_lanes:
+            return None
+        for q in (lane.vol_pts or []):
+            x = self.x_of_beat(q["beat"]); y = self._vol_y_of(i, q["v"])
+            if abs(x - sp.x()) <= 7 and abs(y - sp.y()) <= 7:
+                return (lane, q, i)
+        return None
 
     def resizeEvent(self, ev):
         super().resizeEvent(ev)
@@ -248,6 +312,19 @@ class TimelineView(QGraphicsView):
         i = int(sp.y() // theme.LANE_H)
         if i < 0 or i >= len(self.project.lanes):
             return super().mousePressEvent(ev)
+        lane = self.project.lanes[i]
+        if lane.id in self.vol_lanes:          # volume-line editing takes over this lane
+            hit = self._vol_node_at(sp)
+            if hit is not None:
+                self._vol_drag = (hit[0], hit[1])
+            else:
+                q = {"beat": self.project.snap(self.beat_of_x(sp.x())),
+                     "v": round(self._vol_v_of(i, sp.y()), 3)}
+                lane.vol_pts.append(q)
+                self._vol_drag = (lane, q)
+            self.viewport().update()
+            ev.accept()
+            return
         e = self._event_at(sp)
         if e is not None:
             self.selected = {e.id}
@@ -263,6 +340,16 @@ class TimelineView(QGraphicsView):
         ev.accept()
 
     def mouseMoveEvent(self, ev):
+        if self._vol_drag and (ev.buttons() & Qt.LeftButton):
+            lane, q = self._vol_drag
+            sp = self.mapToScene(ev.position().toPoint())
+            i = self.project.lanes.index(lane)
+            q["beat"] = self.project.snap(max(0.0, self.beat_of_x(sp.x())))
+            q["v"] = round(self._vol_v_of(i, sp.y()), 3)
+            self.viewport().update()
+            self.edited.emit()
+            ev.accept()
+            return
         if self._drag and (ev.buttons() & Qt.LeftButton):
             e = self._drag[0]
             sp = self.mapToScene(ev.position().toPoint())
@@ -289,6 +376,11 @@ class TimelineView(QGraphicsView):
 
     def mouseReleaseEvent(self, ev):
         committed = False
+        if self._vol_drag is not None:
+            self._vol_drag = None
+            self.committed.emit()
+            super().mouseReleaseEvent(ev)
+            return
         if self._marquee is not None:
             i, x0, x1 = self._marquee
             if abs(x1 - x0) < 4:            # a click, not a drag → add a beat
@@ -323,6 +415,13 @@ class TimelineView(QGraphicsView):
 
     def contextMenuEvent(self, ev):
         sp = self.mapToScene(ev.pos())
+        node = self._vol_node_at(sp)
+        if node is not None:                    # right-click a volume node → delete it
+            lane, q, _ = node
+            lane.vol_pts.remove(q)
+            self.viewport().update(); self.edited.emit(); self.committed.emit()
+            ev.accept()
+            return
         e = self._event_at(sp)
         if e is None:
             return
@@ -334,6 +433,14 @@ class TimelineView(QGraphicsView):
 
     def mouseDoubleClickEvent(self, ev):
         sp = self.mapToScene(ev.position().toPoint())
+        node = self._vol_node_at(sp)
+        if node is not None:                    # double-click a volume node → delete it
+            lane, q, _ = node
+            lane.vol_pts.remove(q)
+            self._vol_drag = None
+            self.viewport().update(); self.edited.emit(); self.committed.emit()
+            ev.accept()
+            return
         e = self._event_at(sp)
         if e is not None:
             self.project.events = [x for x in self.project.events if x.id != e.id]
